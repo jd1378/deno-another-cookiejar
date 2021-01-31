@@ -14,6 +14,39 @@ const VALID_URL = /.\:./;
 
 const TERMINATORS = ["\n", "\r", "\0"];
 
+/**
+ * does not make a difference which one is domainA or domainB
+ */
+export function isSameDomainOrSubdomain(domainA?: string, domainB?: string) {
+  if (!domainA || !domainB) {
+    return false;
+  }
+
+  let longerDomain;
+  let shorterDomain;
+  if (domainB.length > domainA.length) {
+    longerDomain = domainB;
+    shorterDomain = domainA;
+  } else {
+    longerDomain = domainA;
+    shorterDomain = domainB;
+  }
+
+  // check if it's a subdomain or only partially matched
+  const indexOfDomain = longerDomain.indexOf(shorterDomain);
+  if (indexOfDomain === -1) {
+    return false;
+  } else if (indexOfDomain > 0) {
+    // if the character behind the part is not a dot, its not a subdomain
+    if (longerDomain.charAt(indexOfDomain - 1) !== ".") {
+      return false;
+    }
+  }
+  // indexOfDomain === 0 is valid
+
+  return true;
+}
+
 // from tough-cookie
 function trimTerminator(str: string) {
   if (str === undefined || str === "") return str;
@@ -248,12 +281,19 @@ export class Cookie {
    * @param redirectedTo - are we being redirecting to this url from another domain ?
    */
   canSendTo(url: string, redirectedTo = false) {
-    if (!VALID_URL.test(url)) return true; // probably relative url, which is not allowed probably in deno
+    if (!VALID_URL.test(url)) return true; // probably relative url, which is not allowed in deno
+
+    const urlObj = new URL(url);
+
+    if (this.secure && urlObj.protocol !== "https:") {
+      return false;
+    }
+
+    const host = urlObj.host;
     if (this.sameSite === "None" && this.secure) return true;
-    const host = new URL(url).host;
     if (this.domain) {
       if (this.sameSite === "Strict" || !this.sameSite) {
-        if (host.endsWith(this.domain)) {
+        if (isSameDomainOrSubdomain(this.domain, host)) {
           if (!redirectedTo) {
             return true;
           }
