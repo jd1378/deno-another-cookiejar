@@ -135,7 +135,7 @@ export class Cookie {
     const keyValuePair = trimTerminator(attrAndValueList.shift() || "")
       .trim()
       .split("=");
-    if (!keyValuePair.length) {
+    if (keyValuePair.length !== 2) {
       return new Cookie();
     }
     if (!(isValidName(keyValuePair[0]) && isValidValue(keyValuePair[1]))) {
