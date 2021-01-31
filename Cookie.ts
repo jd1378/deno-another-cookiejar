@@ -85,7 +85,7 @@ function isValidValue(val: string | undefined) {
   return true;
 }
 
-export function parseDomain(input: string | Request | URL) {
+export function parseURL(input: string | Request | URL) {
   let copyUrl: string;
   if (input instanceof Request) {
     copyUrl = input.url;
@@ -98,9 +98,9 @@ export function parseDomain(input: string | Request | URL) {
   copyUrl = copyUrl.replace(/^\./, "");
   if (!copyUrl.includes("://")) {
     // the protocol does not matter
-    copyUrl = "https://" + copyUrl;
+    copyUrl = "http://" + copyUrl;
   }
-  return new URL(copyUrl).host;
+  return new URL(copyUrl);
 }
 
 export type CookieOptions = {
@@ -244,7 +244,7 @@ export class Cookie {
 
         case "domain":
           if (attrValue) {
-            const domain = parseDomain(attrValue);
+            const domain = parseURL(attrValue).host;
             if (domain) {
               options.domain = domain;
             }
@@ -333,7 +333,7 @@ export class Cookie {
   }
 
   setDomain(url: string | Request | URL) {
-    this.domain = parseDomain(url);
+    this.domain = parseURL(url).host;
   }
 
   setExpires(exp: Date | number) {

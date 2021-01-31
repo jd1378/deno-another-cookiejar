@@ -1,4 +1,9 @@
-import { Cookie, CookieOptions, isSameDomainOrSubdomain } from "./Cookie.ts";
+import {
+  Cookie,
+  CookieOptions,
+  isSameDomainOrSubdomain,
+  parseURL,
+} from "./Cookie.ts";
 
 const exactMatchProps = [
   "name",
@@ -162,6 +167,16 @@ export class CookieJar {
   getCookieString(url: string | Request | URL) {
     const cookie = new Cookie();
     cookie.setDomain(url);
-    return this.getCookies(cookie).map((c) => c.getCookieString()).join("; ");
+    const targetIsSecure = parseURL(url).protocol.includes("https");
+    const cookiesToSend = this.getCookies(cookie)
+      .filter((cookie) => {
+        if (cookie.secure && !targetIsSecure) {
+          return false;
+        }
+        return true;
+      })
+      .map((c) => c.getCookieString())
+      .join("; ");
+    return cookiesToSend;
   }
 }
