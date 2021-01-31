@@ -1,10 +1,10 @@
 import { CookieJar } from "./CookieJar.ts";
 
-export type fetchWrapOptions = {
+export type wrapFetchOptions = {
   cookieJar?: CookieJar;
 };
 
-export function wrapFetch(options?: fetchWrapOptions) {
+export function wrapFetch(options?: wrapFetchOptions) {
   let cookieJar: CookieJar;
   if (options?.cookieJar) {
     cookieJar = options.cookieJar;
