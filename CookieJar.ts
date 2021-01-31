@@ -1,4 +1,4 @@
-import { Cookie, CookieOptions } from "./Cookie.ts";
+import { Cookie, CookieOptions, isSameDomainOrSubdomain } from "./Cookie.ts";
 
 const exactMatchProps = [
   "name",
@@ -21,31 +21,8 @@ function cookieMatches(
   }
 
   if (options.domain) {
-    if (!comparedWith.domain) {
+    if (!isSameDomainOrSubdomain(options.domain, comparedWith.domain)) {
       return false;
-    }
-
-    let longerDomain;
-    let shorterDomain;
-    if (comparedWith.domain.length > options.domain.length) {
-      longerDomain = comparedWith.domain;
-      shorterDomain = options.domain;
-    } else {
-      longerDomain = options.domain;
-      shorterDomain = comparedWith.domain;
-    }
-
-    if (!longerDomain.endsWith(shorterDomain)) {
-      return false;
-    }
-
-    // check if it's a subdomain or only partially matched
-    const indexOfDomain = longerDomain.indexOf(shorterDomain);
-    if (indexOfDomain > 0) {
-      // if the character behind the part is not a dot, its not a subdomain
-      if (longerDomain.charAt(indexOfDomain - 1) !== ".") {
-        return false;
-      }
     }
   }
 
