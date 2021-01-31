@@ -1,1 +1,2 @@
-// import {  } from "./deps.ts";
+export { Cookie } from "./Cookie.ts";
+export { CookieJar } from "./CookieJar.ts";
