@@ -24,6 +24,15 @@ function cookieMatches(
 export class CookieJar {
   cookies = Array<Cookie>();
 
+  /**
+   * @param cookies - the cookies array to initialize with
+   */
+  constructor(cookies?: Array<Cookie>) {
+    if (cookies?.length) {
+      this.cookies = cookies;
+    }
+  }
+
   setCookie(cookie: Cookie | string) {
     let cookieObj;
     if (typeof cookie === "string") {
@@ -52,15 +61,19 @@ export class CookieJar {
   }
 
   /**
-   * @param options - the options to filter cookies with
+   * @param options - the options to filter cookies with. if not provided, returnes all cookies.
    */
   getCookies(options: CookieOptions) {
-    const matchedCookies = [];
-    for (const cookie of this.cookies) {
-      if (cookieMatches(options, cookie)) {
-        matchedCookies.push(cookie);
+    if (options) {
+      const matchedCookies = Array<Cookie>();
+      for (const cookie of this.cookies) {
+        if (cookieMatches(options, cookie)) {
+          matchedCookies.push(cookie);
+        }
       }
+      return matchedCookies;
+    } else {
+      return this.cookies;
     }
-    return matchedCookies;
   }
 }
