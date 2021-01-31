@@ -54,6 +54,25 @@ Deno.test("Cookie constructor (empty)", () => {
   assertEquals(testCookie.isValid, false);
 });
 
+Deno.test("Cookie.from()", () => {
+  // try a real set-cookie header
+  const cookieStr =
+    "__cfduid=0000000000000000000000000000; expires=Tue, 02-Mar-21 11:37:17 GMT; path=/sth; domain=.example.com; HttpOnly; SameSite=Lax; Secure";
+  const cookie = Cookie.from(cookieStr);
+
+  assertEquals(cookie.domain, ".example.com");
+  assertEquals(cookie.path, "/sth");
+  assertEquals(
+    cookie.expires,
+    new Date("Tue, 02-Mar-21 11:37:17 GMT").getTime(),
+  );
+  assertEquals(cookie.name, "__cfduid");
+  assertEquals(cookie.value, "0000000000000000000000000000");
+  assertEquals(cookie.httpOnly, true);
+  assertEquals(cookie.secure, true);
+  assertEquals(cookie.sameSite, "Lax");
+});
+
 Deno.test("Cookie json serialization", () => {
   const testCookie = new Cookie({
     name: "foo",
