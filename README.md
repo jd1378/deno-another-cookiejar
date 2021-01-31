@@ -15,6 +15,7 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this l
 ### JSON serializing cookies
 
 Each cookie object is easily serialized and deserialized. Example:
+
 ```js
 import { Cookie } from '...'
 
