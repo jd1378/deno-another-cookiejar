@@ -31,10 +31,10 @@ Deno.test("Cookie constructor", () => {
   assertEquals(testCookie.maxAge, -1);
   assertEquals(testCookie.path, "/");
   assertEquals(testCookie.sameSite, "None");
-  assertEquals(testCookie.isValid, true);
+  assertEquals(testCookie.isValid(), true);
 
   assertEquals(testCookie.getCookieString(), "foo=bar");
-  assertEquals(testCookie.isValid, true);
+  assertEquals(testCookie.isValid(), true);
 });
 
 Deno.test("Cookie constructor (empty)", () => {
@@ -51,7 +51,7 @@ Deno.test("Cookie constructor (empty)", () => {
   assertEquals(testCookie.sameSite, undefined);
   // exists
   assertExists(testCookie.creationDate);
-  assertEquals(testCookie.isValid, false);
+  assertEquals(testCookie.isValid(), false);
 });
 
 Deno.test("Cookie.from()", () => {

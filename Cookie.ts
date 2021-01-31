@@ -239,7 +239,7 @@ export class Cookie {
     return new Cookie(options);
   }
 
-  get isValid(): boolean {
+  isValid(): boolean {
     return isValidName(this.name) && isValidValue(this.value);
   }
 
