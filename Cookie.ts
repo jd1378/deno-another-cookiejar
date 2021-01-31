@@ -85,9 +85,17 @@ function isValidValue(val: string | undefined) {
   return true;
 }
 
-function parseDomain(url: string) {
+export function parseDomain(input: string | Request | URL) {
+  let copyUrl: string;
+  if (input instanceof Request) {
+    copyUrl = input.url;
+  } else if (input instanceof URL) {
+    copyUrl = input.toString();
+  } else {
+    copyUrl = input;
+  }
   // we *need* to replace the leading dot to simplify usage and expectations
-  let copyUrl = url.replace(/^\./, "");
+  copyUrl = copyUrl.replace(/^\./, "");
   if (!copyUrl.includes("://")) {
     // the protocol does not matter
     copyUrl = "https://" + copyUrl;
@@ -322,6 +330,10 @@ export class Cookie {
 
   getCookieString() {
     return `${this.name || ""}=${this.value || ""}`;
+  }
+
+  setDomain(url: string | Request | URL) {
+    this.domain = parseDomain(url);
   }
 
   setExpires(exp: Date | number) {
