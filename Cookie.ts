@@ -53,8 +53,8 @@ function isValidValue(val: string | undefined) {
 }
 
 function parseDomain(url: string) {
-  // we dont need to replace the leading dot.
-  let copyUrl = url;
+  // we *need* to replace the leading dot to simplify usage and expectations
+  let copyUrl = url.replace(/^\./, "");
   if (!copyUrl.includes("://")) {
     // the protocol does not matter
     copyUrl = "https://" + copyUrl;

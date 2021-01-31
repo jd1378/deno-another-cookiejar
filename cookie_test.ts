@@ -60,7 +60,7 @@ Deno.test("Cookie.from()", () => {
     "__cfduid=0000000000000000000000000000; expires=Tue, 02-Mar-21 11:37:17 GMT; path=/sth; domain=.example.com; HttpOnly; SameSite=Lax; Secure";
   const cookie = Cookie.from(cookieStr);
 
-  assertEquals(cookie.domain, ".example.com");
+  assertEquals(cookie.domain, "example.com");
   assertEquals(cookie.path, "/sth");
   assertEquals(
     cookie.expires,
