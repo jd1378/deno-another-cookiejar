@@ -174,3 +174,36 @@ Deno.test("CookieJar.getCookieString()", () => {
     "",
   );
 });
+
+Deno.test("CookieJar json serialization", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+
+  const newCookieJar = new CookieJar(JSON.parse(JSON.stringify(cookieJar)));
+
+  // our before-serialized jar
+  assertStrictEquals(
+    cookieJar.getCookieString("example.com"),
+    "test=nop; foo=bar",
+  );
+  assertStrictEquals(
+    cookieJar.getCookieString("notexample.com"),
+    "",
+  );
+  // our new parsed cookie jar
+  assertStrictEquals(
+    newCookieJar.getCookieString("example.com"),
+    "test=nop; foo=bar",
+  );
+  assertStrictEquals(
+    newCookieJar.getCookieString("notexample.com"),
+    "",
+  );
+});

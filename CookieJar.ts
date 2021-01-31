@@ -89,9 +89,15 @@ export class CookieJar {
   /**
    * @param cookies - the cookies array to initialize with
    */
-  constructor(cookies?: Array<Cookie>) {
+  constructor(cookies?: Array<Cookie> | Array<CookieOptions>) {
     if (cookies?.length) {
-      this.cookies = cookies;
+      if (typeof (cookies[0] as Cookie).isValid === "function") {
+        this.cookies = cookies as Array<Cookie>;
+      } else {
+        for (const cookie of cookies) {
+          this.cookies.push(new Cookie(cookie));
+        }
+      }
     }
   }
 
@@ -178,5 +184,9 @@ export class CookieJar {
       .map((c) => c.getCookieString())
       .join("; ");
     return cookiesToSend;
+  }
+
+  toJSON() {
+    return this.cookies;
   }
 }
