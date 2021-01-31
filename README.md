@@ -6,6 +6,8 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this l
 
 ## usage
 
+you can import `Cookie`, `CookieJar` from `mod.ts` file.
+
 ### Cookie
 
 you can create cookies in two ways:
@@ -22,6 +24,19 @@ const cookie = new Cookie({
 // second: 
 const cooke = Cookie.from('foo=bar;'); // any string from Set-Cookie header value is also valid.
 ```
+
+### CookieJar
+
+```js
+const cookieJar = new CookieJar();
+```
+
+also if you have cookies from before:
+
+```js
+const cookieJar = new CookieJar(cookiesArray); // cookiesArray: Array<Cookie>
+```
+
 
 ### with fetch in ts
 
