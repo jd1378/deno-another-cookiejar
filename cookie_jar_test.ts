@@ -3,7 +3,6 @@ import { CookieJar } from "./CookieJar.ts";
 import {
   assertEquals,
   assertNotEquals,
-  assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 
 Deno.test("CookieJar inits with cookies if given", () => {
