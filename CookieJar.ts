@@ -90,6 +90,11 @@ export class CookieJar {
     }
   }
 
+  /**
+   * Sets or replaces a cookie inside the jar. 
+   * Only sets new cookies if cookie is valid and not expired.
+   * Validation and expiration checks are not run when replacing a cookie.
+   */
   setCookie(cookie: Cookie | string) {
     let cookieObj;
     if (typeof cookie === "string") {
@@ -109,24 +114,39 @@ export class CookieJar {
     this.cookies = this.cookies.sort(cookieCompare);
   }
 
-  /** Gets the first cooking matching the defined properties of a given Cookie or CookieOptions. returns undefined if not found. `creationDate` prop is not checked. */
+  /** 
+   * Gets the first cooking matching the defined properties of a given Cookie or CookieOptions.
+   * returns undefined if not found. `creationDate` prop is not checked.
+   * Also removes the cookie and returns undefined if cookie is expired.
+   */
   getCookie(options: Cookie | CookieOptions): Cookie | undefined {
-    for (const cookie of this.cookies) {
+    for (const [index, cookie] of this.cookies.entries()) {
       if (cookieMatches(options, cookie)) {
-        return cookie;
+        if (!cookie.isExpired()) {
+          return cookie;
+        } else {
+          this.cookies.splice(index, 1);
+          return undefined;
+        }
       }
     }
   }
 
   /**
-   * @param options - the options to filter cookies with. if not provided, returnes all cookies.
+   * returnes cookies that matches the options, also removes expired cookies before returning.
+   * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
+   *  if no cookie is found with given options, an empty array is returned.
    */
   getCookies(options: CookieOptions) {
     if (options) {
       const matchedCookies = Array<Cookie>();
-      for (const cookie of this.cookies) {
+      for (const [index, cookie] of this.cookies.entries()) {
         if (cookieMatches(options, cookie)) {
-          matchedCookies.push(cookie);
+          if (!cookie.isExpired()) {
+            return matchedCookies.push(cookie);
+          } else {
+            this.cookies.splice(index, 1);
+          }
         }
       }
       return matchedCookies;
