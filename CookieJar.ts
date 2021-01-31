@@ -1,24 +1,69 @@
 import { Cookie, CookieOptions } from "./Cookie.ts";
 
+const exactMatchProps = [
+  "name",
+  "value",
+  "secure",
+  "httpOnly",
+  "maxAge",
+  "expires",
+  "sameSite",
+];
+
 function cookieMatches(
   options: Cookie | CookieOptions,
   comparedWith: Cookie,
 ): boolean {
-  // we assume these cookies match, until a mismatch is found
-  let mismatch = false;
-  for (const key of Object.keys(comparedWith)) {
-    if (
-      // deno-lint-ignore ban-ts-comment
-      // @ts-ignore
-      key in options && typeof comparedWith[key] !== "function" &&
-      // deno-lint-ignore ban-ts-comment
-      // @ts-ignore
-      options[key] !== comparedWith[key]
-    ) {
-      mismatch = true;
+  if (
+    options.path !== undefined && !comparedWith.path?.startsWith(options.path)
+  ) {
+    return false;
+  }
+
+  if (options.domain) {
+    if (!comparedWith.domain) {
+      return false;
+    }
+
+    let longerDomain;
+    let shorterDomain;
+    if (comparedWith.domain.length > options.domain.length) {
+      longerDomain = comparedWith.domain;
+      shorterDomain = options.domain;
+    } else {
+      longerDomain = options.domain;
+      shorterDomain = comparedWith.domain;
+    }
+
+    if (!longerDomain.endsWith(shorterDomain)) {
+      return false;
+    }
+
+    // check if it's a subdomain or only partially matched
+    const indexOfDomain = longerDomain.indexOf(shorterDomain);
+    if (indexOfDomain > 0) {
+      // if the character behind the part is not a dot, its not a subdomain
+      if (longerDomain.charAt(indexOfDomain - 1) !== ".") {
+        return false;
+      }
     }
   }
-  return !mismatch;
+
+  // any mismatch is not tolerated for some props
+  if (
+    exactMatchProps.some((propKey) =>
+      // deno-lint-ignore ban-ts-comment
+      // @ts-ignore
+      options[propKey] !== undefined &&
+      // deno-lint-ignore ban-ts-comment
+      // @ts-ignore
+      options[propKey] !== comparedWith[propKey]
+    )
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 export class CookieJar {
@@ -51,7 +96,7 @@ export class CookieJar {
     this.cookies.push(cookieObj);
   }
 
-  /** Gets the first cooking matching the defined properties of a given Cookie or CookieOptions. returns undefined if not found. */
+  /** Gets the first cooking matching the defined properties of a given Cookie or CookieOptions. returns undefined if not found. `creationDate` prop is not checked. */
   getCookie(options: Cookie | CookieOptions): Cookie | undefined {
     for (const cookie of this.cookies) {
       if (cookieMatches(options, cookie)) {
