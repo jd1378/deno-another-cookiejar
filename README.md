@@ -1,12 +1,44 @@
 # deno-another-cookiejar
 
-This is just a very simple cookiejar for using with deno's fetch.
+This library offers a fetch wrapper that retain cookies. This library also provides a simple cookiejar;
 
-Why the name ? because I didn't want to reserve the cookiejar name, since this library may not be good at it.
+Why the name ? because I didn't want to reserve the cookiejar name, since this library may not be good at it. (But I hope you like it)
 
 ## usage
 
-you can import `Cookie`, `CookieJar` from `mod.ts` file.
+you can import `Cookie`, `CookieJar`, `wrapFetch` from `mod.ts` file.
+
+```js
+export { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@1.0.0/mod.ts';
+```
+
+### wrapFetch
+
+```js
+// this simple
+const fetch = wrapFetch();
+```
+
+Or
+
+```js
+// you can also pass your own cookiejar to wrapFetch to save/load your cookies
+const cookieJar = new CookieJar();
+// Now use this fetch and any cookie that is set will be sent with your next requests automatically
+const fetch = wrapFetch({ cookieJar });
+//...
+fetch("http://example.com");
+// and you can read your cookies from the jar
+cookieJar.getCookie({
+  name: 'cookieName',
+})?.value // your cookie value
+```
+
+You can play around with it too see what it has to offer!
+
+cookies should only be sent to their corresponding domains automatically.
+
+Secure cookies will not be sent over unsecure connections.
 
 ### Cookie
 
@@ -22,7 +54,7 @@ const cookie = new Cookie({
 
 ```js
 // second: 
-const cooke = Cookie.from('foo=bar;'); // any string from Set-Cookie header value is also valid.
+const cookie = Cookie.from('foo=bar;'); // any string from Set-Cookie header value is also valid.
 ```
 
 ### CookieJar
@@ -34,23 +66,14 @@ const cookieJar = new CookieJar();
 also if you have cookies from before:
 
 ```js
-const cookieJar = new CookieJar(cookiesArray); // cookiesArray: Array<Cookie>
+const cookieJar = new CookieJar(cookiesArray); // cookiesArray: Array<Cookie> | Array<CookieOptions>
 ```
 
-
-### with fetch in ts
-
-```js
-// todo
-```
-
-### JSON serializing cookies
+### JSON serializing `Cookie`
 
 Each cookie object is easily serialized and deserialized. Example:
 
 ```js
-import { Cookie } from '...'
-
 const exampleOption = { name: 'foo' , value: 'bar' };
 
 const myCookie = new Cookie(exampleOption);
@@ -62,6 +85,30 @@ new Cookie (
 ).toString() === myCookie.toString(); // true
 
 ```
+
+### JSON serializing `CookieJar`
+
+You can even easily serialize your `CookierJar`. Example:
+
+```js
+const exampleOption = { name: 'foo' , value: 'bar' };
+
+const myCookie = new Cookie(exampleOption);
+
+const cookieJar = new CookieJar([myCookie]);
+
+new CookieJar (
+  JSON.parse(
+    JSON.stringify(cookieJar)
+  )
+).cookies[0].toString() === myCookie.toString(); // true
+```
+
+## test
+
+fetch wrapper tests require network access to emulate server.
+
+run with `deno test --allow-net`
 
 ## notes
 
