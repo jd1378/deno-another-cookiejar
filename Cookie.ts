@@ -13,12 +13,13 @@ const COOKIE_OCTET = /^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/;
 const VALID_URL = /.\:./;
 
 function parseDomain(url: string) {
+  // we dont need to replace the leading dot.
   let copyUrl = url;
   if (!copyUrl.includes("://")) {
     // the protocol does not matter
     copyUrl = "https://" + copyUrl;
   }
-  return new URL(url).host;
+  return new URL(copyUrl).host;
 }
 
 export type CookieOptions = {
