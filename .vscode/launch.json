@@ -8,7 +8,7 @@
       "name": "Launch Deno",
       "request": "launch",
       "type": "pwa-node",
-      "program": "main.ts",
+      "program": "${file}",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "deno",
       "runtimeArgs": [
@@ -20,6 +20,39 @@
       ],
       "outputCapture": "std",
       "attachSimplePort": 9229
+    },
+    {
+      "name": "Debug Test Deno",
+      "request": "launch",
+      "type": "pwa-node",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": [
+        "test",
+        "--unstable",
+        "--inspect-brk",
+        "--allow-all",
+        "--allow-env"
+      ],
+      "outputCapture": "std",
+      "attachSimplePort": 9229
+    },
+    {
+      "name": "Run Test",
+      "request": "launch",
+      "type": "pwa-node",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": [
+        "test",
+        "--unstable",
+        "--inspect-brk",
+        "--allow-all",
+        "--allow-env"
+      ],
+      "outputCapture": "std",
     }
   ]
 }
