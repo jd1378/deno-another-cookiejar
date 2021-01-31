@@ -81,3 +81,55 @@ Deno.test("CookieJar.getCookie()", () => {
     cookie,
   );
 });
+
+Deno.test("CookieJar.getCookie() (multiple cookie entries)", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookieStr3 = "foo=bar; path=/sth; domain=notexample.com";
+  const cookieStr4 = "baz=thud; path=/sth; domain=notexample.com";
+  const cookieStr5 = "moo=bee; path=/notsth; domain=notexample.com";
+  const cookieStr6 = "foo=bar; path=/sth/deeper; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+  const cookie3 = Cookie.from(cookieStr3);
+  const cookie4 = Cookie.from(cookieStr4);
+  const cookie5 = Cookie.from(cookieStr5);
+  const cookie6 = Cookie.from(cookieStr6);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+    cookie3,
+    cookie4,
+    cookie5,
+    cookie6,
+  ]);
+  assertEquals(cookieJar.cookies.length, 6);
+
+  assertEquals(
+    cookieJar.getCookie({ name: "foo", domain: "anothernotexample.com" }),
+    undefined,
+  );
+  assertEquals(
+    cookieJar.getCookie({ name: "foo", domain: "notexample.com" }),
+    cookie3,
+  );
+  assertEquals(
+    cookieJar.getCookie({ name: "foo", domain: "notexample.com" }),
+    cookie3,
+  );
+  assertEquals(
+    cookieJar.getCookie({ path: "/notsth" }),
+    cookie5,
+  );
+
+  // path test
+  assertEquals(
+    cookieJar.getCookie({ name: "foo", path: "/sth" }),
+    cookie2,
+  );
+  assertEquals(
+    cookieJar.getCookie({ name: "foo", path: "/sth/deeper" }),
+    cookie6,
+  );
+});
