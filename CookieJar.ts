@@ -94,13 +94,17 @@ export class CookieJar {
    * Sets or replaces a cookie inside the jar. 
    * Only sets new cookies if cookie is valid and not expired.
    * Validation and expiration checks are not run when replacing a cookie.
+   * @param url - the url that this cookie from received from. mainly used by the fetch wrapper
    */
-  setCookie(cookie: Cookie | string) {
+  setCookie(cookie: Cookie | string, url?: string | Request | URL) {
     let cookieObj;
     if (typeof cookie === "string") {
       cookieObj = Cookie.from(cookie);
     } else {
       cookieObj = cookie;
+    }
+    if (!cookieObj.domain && url) {
+      cookieObj.setDomain(url);
     }
     const foundCookie = this.getCookie(cookieObj);
     if (foundCookie) {
@@ -137,13 +141,13 @@ export class CookieJar {
    * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
    *  if no cookie is found with given options, an empty array is returned.
    */
-  getCookies(options: CookieOptions) {
+  getCookies(options: CookieOptions | Cookie) {
     if (options) {
       const matchedCookies = Array<Cookie>();
       for (const [index, cookie] of this.cookies.entries()) {
         if (cookieMatches(options, cookie)) {
           if (!cookie.isExpired()) {
-            return matchedCookies.push(cookie);
+            matchedCookies.push(cookie);
           } else {
             this.cookies.splice(index, 1);
           }
@@ -153,5 +157,11 @@ export class CookieJar {
     } else {
       return this.cookies;
     }
+  }
+
+  getCookieString(url: string | Request | URL) {
+    const cookie = new Cookie();
+    cookie.setDomain(url);
+    return this.getCookies(cookie).map((c) => c.getCookieString()).join("; ");
   }
 }
