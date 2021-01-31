@@ -71,6 +71,12 @@ Deno.test("Cookie.from()", () => {
   assertEquals(cookie.httpOnly, true);
   assertEquals(cookie.secure, true);
   assertEquals(cookie.sameSite, "Lax");
+
+  // other tests
+  assertEquals(Cookie.from("foo=bar; ").getCookieString(), "foo=bar");
+  assertEquals(Cookie.from("foo=bar;").getCookieString(), "foo=bar");
+  assertEquals(Cookie.from("foo=bar").getCookieString(), "foo=bar");
+  assertEquals(Cookie.from("foo=bar").toString(), "foo=bar");
 });
 
 Deno.test("Cookie json serialization", () => {
