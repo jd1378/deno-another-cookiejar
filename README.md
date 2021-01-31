@@ -6,6 +6,23 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this l
 
 ## usage
 
+### Cookie
+
+you can create cookies in two ways:
+
+```js
+// first: using Cookie constructor with CookieOptions
+const cookie = new Cookie({
+  name: 'foo',
+  value: 'bar'
+});
+```
+
+```js
+// second: 
+const cooke = Cookie.from('foo=bar;'); // any string from Set-Cookie header value is also valid.
+```
+
 ### with fetch in ts
 
 ```js
