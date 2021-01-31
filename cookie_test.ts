@@ -5,7 +5,7 @@ import {
   assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 
-Deno.test("Cookie construction", () => {
+Deno.test("Cookie constructor", () => {
   const dateValue = Date.now();
   const testCookie = new Cookie({
     domain: "www.google.com",
@@ -37,7 +37,7 @@ Deno.test("Cookie construction", () => {
   assertEquals(testCookie.isValid, true);
 });
 
-Deno.test("Cookie construction (empty)", () => {
+Deno.test("Cookie constructor (empty)", () => {
   const dateValue = Date.now();
   const testCookie = new Cookie();
   assertEquals(testCookie.domain, undefined);
