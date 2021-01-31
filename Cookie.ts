@@ -12,6 +12,46 @@ const COOKIE_OCTET = /^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/;
 
 const VALID_URL = /.\:./;
 
+const TERMINATORS = ["\n", "\r", "\0"];
+
+// from tough-cookie
+function trimTerminator(str: string) {
+  if (str === undefined || str === "") return str;
+  for (let t = 0; t < TERMINATORS.length; t++) {
+    const terminatorIdx = str.indexOf(TERMINATORS[t]);
+    if (terminatorIdx !== -1) {
+      str = str.substr(0, terminatorIdx);
+    }
+  }
+
+  return str;
+}
+
+function isValidName(name: string | undefined) {
+  if (!name) {
+    return false;
+  }
+  if (CONTROL_CHARS.test(name) || COOKIE_NAME_BLOCKED.test(name)) {
+    return false;
+  }
+  return true;
+}
+
+function isValidValue(val: string | undefined) {
+  if (!val) {
+    return false;
+  }
+  if (
+    CONTROL_CHARS.test(val) ||
+    COOKIE_OCTET_BLOCKED.test(val) ||
+    !COOKIE_OCTET.test(val)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 function parseDomain(url: string) {
   // we dont need to replace the leading dot.
   let copyUrl = url;
@@ -89,6 +129,22 @@ export class Cookie {
 
     const unparsed = cookieStr.slice().trim(); // copy
     const attrAndValueList = unparsed.split(";");
+
+    // first split is the key value pair,
+    // if theres no semicolon in the string, still the first element in array is key value pair
+    const keyValuePair = trimTerminator(attrAndValueList.shift() || "")
+      .trim()
+      .split("=");
+    if (!keyValuePair.length) {
+      return new Cookie();
+    }
+    if (!(isValidName(keyValuePair[0]) && isValidValue(keyValuePair[1]))) {
+      return new Cookie();
+    }
+    options.name = keyValuePair[0];
+    options.value = keyValuePair[1];
+
+    // now get attributes
     while (attrAndValueList.length) {
       const cookieAV = attrAndValueList.shift()?.trim();
       if (!cookieAV) {
@@ -184,21 +240,7 @@ export class Cookie {
   }
 
   get isValid(): boolean {
-    if (!this.name || !this.value) {
-      return false;
-    }
-    if (CONTROL_CHARS.test(this.name) || CONTROL_CHARS.test(this.value)) {
-      return false;
-    }
-    if (COOKIE_NAME_BLOCKED.test(this.name)) {
-      return false;
-    }
-    if (
-      COOKIE_OCTET_BLOCKED.test(this.value) || !COOKIE_OCTET.test(this.value)
-    ) {
-      return false;
-    }
-    return true;
+    return isValidName(this.name) && isValidValue(this.value);
   }
 
   /**
