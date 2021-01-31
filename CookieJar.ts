@@ -43,6 +43,41 @@ function cookieMatches(
   return true;
 }
 
+// cookie compare from tough-cookie
+const MAX_TIME = 2147483647000; // 31-bit max
+/**
+ *  Cookies with longer paths are listed before cookies with
+ *  shorter paths.
+ * 
+ *  Among cookies that have equal-length path fields, cookies with
+ *  earlier creation-times are listed before cookies with later
+ *  creation-times."
+ */
+function cookieCompare(a: Cookie, b: Cookie) {
+  let cmp = 0;
+
+  // descending for length: b CMP a
+  const aPathLen = a.path?.length || 0;
+  const bPathLen = b.path?.length || 0;
+  cmp = bPathLen - aPathLen;
+  if (cmp !== 0) {
+    return cmp;
+  }
+
+  // ascending for time: a CMP b
+  const aTime = a.creationDate || MAX_TIME;
+  const bTime = b.creationDate || MAX_TIME;
+  cmp = aTime - bTime;
+  if (cmp !== 0) {
+    return cmp;
+  }
+
+  // tie breaker
+  cmp = a.creationIndex - b.creationIndex;
+
+  return cmp;
+}
+
 export class CookieJar {
   cookies = Array<Cookie>();
 
@@ -71,6 +106,8 @@ export class CookieJar {
       }
     }
     this.cookies.push(cookieObj);
+    // sort by creation date, so when searching, we get the latest created cookies.
+    this.cookies = this.cookies.sort(cookieCompare);
   }
 
   /** Gets the first cooking matching the defined properties of a given Cookie or CookieOptions. returns undefined if not found. `creationDate` prop is not checked. */

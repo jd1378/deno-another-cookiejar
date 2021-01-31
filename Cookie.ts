@@ -127,6 +127,11 @@ export class Cookie {
   httpOnly = false;
   sameSite: "Lax" | "Strict" | "None" | undefined;
   creationDate = Date.now();
+  // deno-lint-ignore ban-ts-comment
+  // @ts-ignore
+  creationIndex: number;
+
+  static cookiesCreated = 0;
 
   constructor(options?: CookieOptions) {
     if (options) {
@@ -144,6 +149,14 @@ export class Cookie {
         this.creationDate = options.creationDate;
       }
     }
+
+    // used to break creation ties in cookieCompare():
+    Object.defineProperty(this, "creationIndex", {
+      configurable: false,
+      enumerable: false, // important for assertStrictEquals checks
+      writable: true,
+      value: ++Cookie.cookiesCreated,
+    });
   }
 
   static from(cookieStr: string) {

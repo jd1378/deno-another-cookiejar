@@ -90,3 +90,15 @@ Deno.test("Cookie json serialization", () => {
   assertStrictEquals(testCookie.toString(), newCookie.toString());
   assertStrictEquals(testCookie.getCookieString(), newCookie.getCookieString());
 });
+
+Deno.test("Cookie json serialization does not include creationIndex or cookiesCreated", () => {
+  const testCookie = new Cookie({
+    name: "foo",
+    value: "bar",
+  });
+
+  const cookieData = JSON.parse(JSON.stringify(testCookie));
+
+  assertStrictEquals(cookieData.creationIndex, undefined);
+  assertStrictEquals(cookieData.cookiesCreated, undefined);
+});
