@@ -131,8 +131,8 @@ export class Cookie {
   /** in seconds */
   maxAge: number | undefined;
   // other
-  secure = false;
-  httpOnly = false;
+  secure: boolean | undefined;
+  httpOnly: boolean | undefined;
   sameSite: "Lax" | "Strict" | "None" | undefined;
   creationDate = Date.now();
   // deno-lint-ignore ban-ts-comment
@@ -149,8 +149,8 @@ export class Cookie {
       this.domain = options.domain;
       this.expires = options.expires;
       this.maxAge = options.maxAge;
-      this.secure = !!options.secure;
-      this.httpOnly = !!options.httpOnly;
+      this.secure = options.secure;
+      this.httpOnly = options.httpOnly;
       this.sameSite = options.sameSite;
 
       if (options.creationDate) {
