@@ -100,12 +100,11 @@ export class CookieJar {
     const foundCookie = this.getCookie(cookieObj);
     if (foundCookie) {
       const indexOfCookie = this.cookies.indexOf(foundCookie);
-      if (indexOfCookie !== -1) {
-        this.cookies.splice(indexOfCookie, 1, cookieObj);
-        return;
-      }
+      this.cookies.splice(indexOfCookie, 1, cookieObj);
+    } else if (cookieObj.isValid() && !cookieObj.isExpired()) {
+      this.cookies.push(cookieObj);
     }
-    this.cookies.push(cookieObj);
+
     // sort by creation date, so when searching, we get the latest created cookies.
     this.cookies = this.cookies.sort(cookieCompare);
   }
