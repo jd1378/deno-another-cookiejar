@@ -3,6 +3,7 @@ import { CookieJar } from "./CookieJar.ts";
 import {
   assertEquals,
   assertNotEquals,
+  assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 
 Deno.test("CookieJar inits with cookies if given", () => {
@@ -130,5 +131,46 @@ Deno.test("CookieJar.getCookie() (multiple cookie entries)", () => {
   assertEquals(
     cookieJar.getCookie({ name: "foo", path: "/sth/deeper" }),
     cookie6,
+  );
+});
+
+Deno.test("CookieJar.getCookies()", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+  assertEquals(
+    cookieJar.getCookies(new Cookie({ domain: "notexample.com" })).length,
+    0,
+  );
+  assertEquals(
+    cookieJar.getCookies(new Cookie({ domain: "example.com" })).length,
+    2,
+  );
+});
+
+Deno.test("CookieJar.getCookieString()", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+
+  assertStrictEquals(
+    cookieJar.getCookieString("example.com"),
+    "test=nop; foo=bar",
+  );
+  assertStrictEquals(
+    cookieJar.getCookieString("notexample.com"),
+    "",
   );
 });
