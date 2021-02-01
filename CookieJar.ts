@@ -131,7 +131,7 @@ export class CookieJar {
 
   /** 
    * Gets the first cooking matching the defined properties of a given Cookie or CookieOptions.
-   * returns undefined if not found. `creationDate` prop is not checked.
+   * returns undefined if not found or expired. `creationDate` prop is not checked.
    * Also removes the cookie and returns undefined if cookie is expired.
    */
   getCookie(options: Cookie | CookieOptions): Cookie | undefined {
@@ -148,21 +148,27 @@ export class CookieJar {
   }
 
   /**
-   * returnes cookies that matches the options, also removes expired cookies before returning.
+   * returnes cookies that matches the options excluding expired ones, also removes expired cookies before returning.
    * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
    *  if no cookie is found with given options, an empty array is returned.
    */
   getCookies(options?: CookieOptions | Cookie) {
     if (options) {
-      const matchedCookies = Array<Cookie>();
+      const matchedCookies: Cookie[] = [];
+      const removeCookies: Cookie[] = [];
       for (const [index, cookie] of this.cookies.entries()) {
         if (cookieMatches(options, cookie)) {
           if (!cookie.isExpired()) {
             matchedCookies.push(cookie);
           } else {
-            this.cookies.splice(index, 1);
+            removeCookies.push(cookie);
           }
         }
+      }
+      if (removeCookies.length) {
+        this.cookies = this.cookies.filter((cookie) =>
+          !removeCookies.includes(cookie)
+        );
       }
       return matchedCookies;
     } else {

@@ -154,6 +154,36 @@ Deno.test("CookieJar.getCookies()", () => {
   );
 });
 
+Deno.test("CookieJar.getCookies() with expired cookies", () => {
+  const cookieStr1 =
+    "test=nop; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT";
+  const cookieStr2 =
+    "foo=bar; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT";
+  const cookieStr3 =
+    "foo=bar; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2022 07:28:00 GMT";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+  const cookie3 = Cookie.from(cookieStr3);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+    cookie3,
+  ]);
+  assertEquals(
+    cookieJar.getCookies(new Cookie({ domain: "notexample.com" })).length,
+    0,
+  );
+  assertEquals(
+    cookieJar.getCookies(new Cookie({ domain: "example.com" })).length,
+    1,
+  );
+  assertEquals(
+    cookieJar.cookies.length,
+    1,
+  );
+});
+
 Deno.test("CookieJar.removeCookie()", () => {
   const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
   const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
