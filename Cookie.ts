@@ -390,4 +390,8 @@ export class Cookie {
 
     return str;
   }
+
+  clone() {
+    return new Cookie(JSON.parse(JSON.stringify(this)));
+  }
 }

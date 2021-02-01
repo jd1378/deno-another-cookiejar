@@ -1,7 +1,9 @@
 import { Cookie } from "./Cookie.ts";
 import {
+  assert,
   assertEquals,
   assertExists,
+  assertNotEquals,
   assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 
@@ -101,4 +103,16 @@ Deno.test("Cookie json serialization does not include creationIndex or cookiesCr
 
   assertStrictEquals(cookieData.creationIndex, undefined);
   assertStrictEquals(cookieData.cookiesCreated, undefined);
+});
+
+Deno.test("Cookie.clone()", () => {
+  const testCookie = new Cookie({
+    name: "foo",
+    value: "bar",
+  });
+
+  const anotherCookie = testCookie.clone();
+
+  // not equal in reference
+  assert(testCookie != anotherCookie, "error: both have the same reference");
 });
