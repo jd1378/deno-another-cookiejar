@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.0.1
+
+- fix headers not merged correctly and add test
+
 ## v2.0.0
 
 - now `value`, `secure`, `httpOnly`, `maxAge`, `expires`, `sameSite` props will only be strictly checked only if
