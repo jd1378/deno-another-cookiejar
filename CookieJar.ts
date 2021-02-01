@@ -5,8 +5,7 @@ import {
   parseURL,
 } from "./Cookie.ts";
 
-const exactMatchProps = [
-  "name",
+const strictMatchProps = [
   "value",
   "secure",
   "httpOnly",
@@ -18,6 +17,7 @@ const exactMatchProps = [
 function cookieMatches(
   options: Cookie | CookieOptions,
   comparedWith: Cookie,
+  strictMatch = false,
 ): boolean {
   if (
     options.path !== undefined && !comparedWith.path?.startsWith(options.path)
@@ -31,9 +31,16 @@ function cookieMatches(
     }
   }
 
-  // any mismatch is not tolerated for some props
   if (
-    exactMatchProps.some((propKey) =>
+    options.name !== undefined &&
+    options.name !== comparedWith.name
+  ) {
+    return false;
+  }
+
+  if (
+    strictMatch &&
+    strictMatchProps.some((propKey) =>
       // deno-lint-ignore ban-ts-comment
       // @ts-ignore
       options[propKey] !== undefined &&
@@ -135,8 +142,9 @@ export class CookieJar {
    * Also removes the cookie and returns undefined if cookie is expired.
    */
   getCookie(options: Cookie | CookieOptions): Cookie | undefined {
+    const strictMatch = typeof (options as Cookie).isValid !== "function";
     for (const [index, cookie] of this.cookies.entries()) {
-      if (cookieMatches(options, cookie)) {
+      if (cookieMatches(options, cookie, strictMatch)) {
         if (!cookie.isExpired()) {
           return cookie;
         } else {
