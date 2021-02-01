@@ -154,6 +154,70 @@ Deno.test("CookieJar.getCookies()", () => {
   );
 });
 
+Deno.test("CookieJar.removeCookie()", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+  assertEquals(
+    cookieJar.getCookies().length,
+    2,
+  );
+  cookieJar.removeCookie(new Cookie({ name: "test" }));
+  assertEquals(
+    cookieJar.getCookies(new Cookie({ domain: "example.com" })).length,
+    1,
+  );
+  assertEquals(
+    cookieJar.getCookie(new Cookie({ domain: "example.com" }))?.value,
+    "bar",
+  );
+});
+
+Deno.test("CookieJar.removeCookies()", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+  assertEquals(
+    cookieJar.getCookies().length,
+    2,
+  );
+  cookieJar.removeCookies();
+  assertEquals(
+    cookieJar.getCookies().length,
+    0,
+  );
+
+  cookieJar.setCookie(cookie1);
+  cookieJar.setCookie(cookie2);
+  assertEquals(
+    cookieJar.getCookies().length,
+    2,
+  );
+  // use wrong domain, should do nothing
+  cookieJar.removeCookies({ domain: "notexample.com" });
+  assertEquals(
+    cookieJar.getCookies().length,
+    2,
+  );
+  cookieJar.removeCookies({ domain: "example.com" });
+  assertEquals(
+    cookieJar.getCookies().length,
+    0,
+  );
+});
+
 Deno.test("CookieJar.getCookieString()", () => {
   const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
   const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";

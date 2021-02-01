@@ -191,26 +191,37 @@ export class CookieJar {
   }
 
   /**
-   * Removes first cookie that matches the given option.
+   * Removes first cookie that matches the given option. 
+   * 
+   * Returns the deleted cookie if found or undefined otherwise.
    */
-  removeCookie(options: CookieOptions | Cookie) {
+  removeCookie(options: CookieOptions | Cookie): Cookie | undefined {
     for (const [index, cookie] of this.cookies.entries()) {
       if (cookieMatches(options, cookie)) {
-        this.cookies.splice(index, 1);
+        return this.cookies.splice(index, 1)[0];
       }
     }
   }
 
   /**
    * Removes all cookies that matches the given option.
+   * If options is not given, all cookies will be deleted.
+   * 
+   * Returns the deleted cookies if found or undefined otherwise.
    */
-  removeCookies(options: CookieOptions | Cookie) {
+  removeCookies(options?: CookieOptions | Cookie): Array<Cookie> | undefined {
     if (options) {
-      for (const [index, cookie] of this.cookies.entries()) {
+      const deletedCookies: Cookie[] = [];
+      this.cookies = this.cookies.filter((cookie, index) => {
         if (cookieMatches(options, cookie)) {
-          this.cookies.splice(index, 1);
+          deletedCookies.push(cookie);
+          return false;
         }
-      }
+        return true;
+      });
+      return deletedCookies.length ? deletedCookies : undefined;
+    } else {
+      this.cookies = [];
     }
   }
 }
