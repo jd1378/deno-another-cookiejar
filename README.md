@@ -9,7 +9,7 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this l
 you can import `Cookie`, `CookieJar`, `wrapFetch` from `mod.ts` file.
 
 ```js
-export { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@v1.2.0/mod.ts';
+export { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@v2.0.0/mod.ts';
 ```
 
 ### wrapFetch
@@ -68,6 +68,12 @@ also if you have cookies from before:
 ```js
 const cookieJar = new CookieJar(cookiesArray); // cookiesArray: Array<Cookie> | Array<CookieOptions>
 ```
+
+#### Note on retrieving cookies (v2.0.0)
+
+You can get cookies using either `CookieOptions` or a `Cookie` itself.
+The difference is if you use `CookieOptions`, it will strictly check any prop that is passed against the cookie.
+But if you use a `Cookie` object, it will only check `name`, `path` and `domain`.
 
 ### JSON serializing `Cookie`
 
