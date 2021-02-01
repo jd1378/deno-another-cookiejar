@@ -152,7 +152,7 @@ export class CookieJar {
    * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
    *  if no cookie is found with given options, an empty array is returned.
    */
-  getCookies(options: CookieOptions | Cookie) {
+  getCookies(options?: CookieOptions | Cookie) {
     if (options) {
       const matchedCookies = Array<Cookie>();
       for (const [index, cookie] of this.cookies.entries()) {
@@ -188,5 +188,29 @@ export class CookieJar {
 
   toJSON() {
     return this.cookies;
+  }
+
+  /**
+   * Removes first cookie that matches the given option.
+   */
+  removeCookie(options: CookieOptions | Cookie) {
+    for (const [index, cookie] of this.cookies.entries()) {
+      if (cookieMatches(options, cookie)) {
+        this.cookies.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Removes all cookies that matches the given option.
+   */
+  removeCookies(options: CookieOptions | Cookie) {
+    if (options) {
+      for (const [index, cookie] of this.cookies.entries()) {
+        if (cookieMatches(options, cookie)) {
+          this.cookies.splice(index, 1);
+        }
+      }
+    }
   }
 }
