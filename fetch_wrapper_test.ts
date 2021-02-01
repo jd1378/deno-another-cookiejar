@@ -5,17 +5,19 @@ import {
 import { serve, Server } from "https://deno.land/std@0.85.0/http/server.ts";
 import { CookieJar } from "./CookieJar.ts";
 import { wrapFetch } from "./FetchWrapper.ts";
+import { delay } from "https://deno.land/std@0.85.0/async/delay.ts";
 
-let server1: Server;
+let server1: Server | undefined;
 const serverOneUrl = "http://localhost:54933";
 
-let server2: Server;
+let server2: Server | undefined;
 const serverTwoUrl = "http://localhost:54934";
 
 let handlers: Promise<void | string>[];
 handlers = [];
 
 async function handleServer1() {
+  await delay(100);
   server1 = serve({ hostname: "0.0.0.0", port: 54933 });
   for await (const request of server1) {
     if (request.url === "/") {
@@ -32,6 +34,7 @@ async function handleServer1() {
 }
 
 async function handleServer2() {
+  await delay(100);
   server2 = serve({ hostname: "0.0.0.0", port: 54934 });
   for await (const request of server2) {
     if (request.url === "/") {
@@ -47,7 +50,12 @@ async function handleServer2() {
   }
 }
 
-console.log(`Test HTTP webserver running at: http://localhost:54933`);
+console.log(
+  "Test HTTP webserver running at:",
+  "http://localhost:54933",
+  "http://localhost:54934",
+);
+console.log('GET "/" echos "cookie" header, GET "/set1" sets two cookies');
 
 async function closeServers() {
   try {
@@ -60,6 +68,8 @@ async function closeServers() {
     );
     await Promise.all(handlers);
     handlers = [];
+    server1 = undefined;
+    server2 = undefined;
   } catch {
     //
   }
@@ -73,6 +83,45 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
   assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
   assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
   await closeServers();
+});
+
+Deno.test("WrappedFetch merges headers with cookie header", async () => {
+  try {
+    handlers.push(handleServer1());
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
+
+    const headersToSend = new Headers();
+    headersToSend.set("user-agent", "something");
+
+    let cookieString = await wrappedFetch(serverOneUrl + "/", {
+      headers: headersToSend,
+    }).then((r) => r.text());
+
+    assertStrictEquals(cookieString, "foo=bar");
+
+    // second type
+    cookieString = await wrappedFetch(serverOneUrl + "/", {
+      headers: {
+        "user-agent": "something",
+      },
+    }).then((r) => r.text());
+
+    assertStrictEquals(cookieString, "foo=bar");
+
+    // third type
+    cookieString = await wrappedFetch(serverOneUrl + "/", {
+      headers: [
+        ["user-agent", "something"],
+      ],
+    }).then((r) => r.text());
+
+    assertStrictEquals(cookieString, "foo=bar");
+  } finally {
+    await closeServers();
+  }
 });
 
 Deno.test("WrappedFetch doesn't send secure cookies over unsecure urls", async () => {
