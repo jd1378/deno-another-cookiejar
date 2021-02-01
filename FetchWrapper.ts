@@ -14,7 +14,7 @@ export function wrapFetch(options?: wrapFetchOptions) {
 
   async function wrappedFetch(
     input: string | Request | URL,
-    init?: RequestInit | undefined | RequestInit & { client: Deno.HttpClient },
+    init?: RequestInit | undefined,
   ) {
     // let fetch handle the error
     if (!input) {
