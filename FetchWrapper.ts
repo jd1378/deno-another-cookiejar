@@ -1,4 +1,5 @@
 import { CookieJar } from "./CookieJar.ts";
+import { setHeader } from "./header_utils.ts";
 
 /**
  * @param options - Wrap options
@@ -23,31 +24,7 @@ export function wrapFetch(
       interceptedInit.headers = new Headers();
     }
 
-    if (typeof (interceptedInit.headers as Headers).set === "function") {
-      (interceptedInit.headers as Headers).set("cookie", cookieString);
-    } else if (Array.isArray(interceptedInit.headers)) {
-      let found = false;
-      for (
-        const [index, [hName, hValue]]
-          of (interceptedInit.headers as string[][]).entries()
-      ) {
-        if (hName === "cookie") {
-          // deno-lint-ignore ban-ts-comment
-          // @ts-ignore
-          interceptedInit.headers[index] = [hName, cookieString];
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        (interceptedInit.headers as string[][]).push(["cookie", cookieString]);
-      }
-    } else if (typeof interceptedInit.headers === "object") {
-      Object.assign(
-        interceptedInit.headers,
-        cookieString ? { cookie: cookieString } : {},
-      );
-    }
+    setHeader(interceptedInit.headers, "cookie", cookieString);
 
     const response = await fetchFn(input, interceptedInit);
     response.headers.forEach((value, key) => {
