@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.1.1
+
+- sets cookie header with a more precise approach.
+
 ## v2.1.0
 
 - add `fetchFn` to wrap options. this allows you to wrap your fetch multiple times to add other helpers.
