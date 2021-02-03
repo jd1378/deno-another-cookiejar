@@ -340,3 +340,36 @@ Deno.test("CookieJar json serialization", () => {
     "",
   );
 });
+
+Deno.test("CookieJar replaceCookies()", () => {
+  const cookieStr1 = "test=nop; path=/sth; domain=.example.com";
+  const cookieStr2 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+  const cookie2 = Cookie.from(cookieStr2);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+
+  assertStrictEquals(
+    cookieJar.cookies.length,
+    2,
+  );
+
+  cookieJar.replaceCookies();
+  assertStrictEquals(
+    cookieJar.cookies.length,
+    0,
+  );
+
+  cookieJar.replaceCookies([cookie1]);
+  assertStrictEquals(
+    cookieJar.cookies.length,
+    1,
+  );
+  assertStrictEquals(
+    cookieJar.cookies[0],
+    cookie1,
+  );
+});
