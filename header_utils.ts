@@ -38,7 +38,7 @@ export function getHeader(
   if (isHeadersOfTypeHeaders(headers)) {
     return headers.get(name);
   } else if (isHeadersOfTypeArray(headers)) {
-    for (const [index, [hName, hValue]] of headers.entries()) {
+    for (const [hName, hValue] of headers) {
       if (hName.toLowerCase() === name.toLowerCase()) {
         return hValue;
       }
@@ -101,14 +101,6 @@ export function appendHeader(
 ) {
   if (isHeadersOfTypeHeaders(headers)) {
     headers.append(name, value);
-  } else if (isHeadersOfTypeArray(headers)) {
-    let newValue = getHeader(headers, name) || "";
-    if (!newValue) {
-      newValue += value;
-    } else {
-      newValue += ", " + value;
-    }
-    setHeader(headers, name, newValue);
   } else {
     let newValue = getHeader(headers, name) || "";
     if (!newValue) {
@@ -127,7 +119,7 @@ export function deleteHeader(
   if (isHeadersOfTypeHeaders(headers)) {
     return headers.delete(name);
   } else if (isHeadersOfTypeArray(headers)) {
-    for (const [index, [hName, hValue]] of headers.entries()) {
+    for (const [index, [hName]] of headers.entries()) {
       if (hName.toLowerCase() === name.toLowerCase()) {
         headers.splice(index, 1);
         return;
