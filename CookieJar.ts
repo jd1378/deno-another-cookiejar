@@ -183,10 +183,10 @@ export class CookieJar {
   }
 
   getCookieString(url: string | Request | URL) {
-    const cookie = new Cookie();
-    cookie.setDomain(url);
+    const searchCookie = new Cookie();
+    searchCookie.setDomain(url);
     const targetIsSecure = parseURL(url).protocol.includes("https");
-    const cookiesToSend = this.getCookies(cookie)
+    const cookiesToSend = this.getCookies(searchCookie)
       .filter((cookie) => {
         if (cookie.secure && !targetIsSecure) {
           return false;
