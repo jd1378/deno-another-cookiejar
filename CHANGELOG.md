@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.2.3
+
+- fix expires not being added to cookie.toString()
+
 ## v2.2.2
 
 - `CookieJar.setCookie()`: set cookie path from url's pathname if path is not defined inside cookie string (or Cookie). (it was already done for domain.)
