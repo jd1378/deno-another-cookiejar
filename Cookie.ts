@@ -368,7 +368,7 @@ export class Cookie {
     let str = this.getCookieString();
 
     if (this.expires && this.expires !== Infinity) {
-      "; Expires=" + (new Date(this.expires)).toUTCString();
+      str += "; Expires=" + (new Date(this.expires)).toUTCString();
     }
 
     if (this.maxAge && this.maxAge !== Infinity) {
