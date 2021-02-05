@@ -131,7 +131,7 @@ export class CookieJar {
     }
 
     // sort by creation date, so when searching, we get the latest created cookies.
-    this.cookies = this.cookies.sort(cookieCompare);
+    this.cookies.sort(cookieCompare);
   }
 
   /** 
