@@ -373,3 +373,98 @@ Deno.test("CookieJar replaceCookies()", () => {
     cookie1,
   );
 });
+
+Deno.test("CookieJar.setCookie() replaces old cookie completely", () => {
+  const cookieStr1 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+  ]);
+  assertEquals(
+    cookieJar.getCookies().length,
+    1,
+  );
+
+  // test by string
+  cookieJar.setCookie("foo=baz; path=/sth; domain=.example.com");
+  assertEquals(
+    cookieJar.getCookies().length,
+    1,
+  );
+  assertEquals(
+    cookieJar.getCookies()[0].value,
+    "baz",
+  );
+  // test by cookie
+  cookieJar.setCookie(
+    new Cookie({
+      name: "foo",
+      value: "thud",
+      path: "/sth",
+    }),
+  );
+  assertEquals(
+    cookieJar.getCookies().length,
+    1,
+  );
+  assertEquals(
+    cookieJar.getCookies()[0].value,
+    "thud",
+  );
+});
+
+Deno.test("CookieJar.setCookie() adds cookie if name matches but path or domain do not match", () => {
+  const cookieStr1 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+  ]);
+  assertEquals(
+    cookieJar.getCookies().length,
+    1,
+  );
+
+  // test path by string
+  cookieJar.setCookie("foo=baz; path=/nop; domain=.example.com");
+  assertEquals(
+    cookieJar.getCookies().length,
+    2,
+  );
+
+  // test path by cookie
+  cookieJar.setCookie(
+    new Cookie({
+      name: "foo",
+      value: "thud",
+      path: "/zed",
+      domain: ".example.com",
+    }),
+  );
+  assertEquals(
+    cookieJar.getCookies().length,
+    3,
+  );
+
+  // test domain by string
+  cookieJar.setCookie("foo=baz; path=/sth; domain=notexample.com");
+  assertEquals(
+    cookieJar.getCookies().length,
+    4,
+  );
+
+  // test domain by cookie
+  cookieJar.setCookie(
+    new Cookie({
+      name: "foo",
+      value: "thud",
+      path: "/sth",
+      domain: "anothernotexample.com",
+    }),
+  );
+  assertEquals(
+    cookieJar.getCookies().length,
+    5,
+  );
+});
