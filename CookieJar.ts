@@ -162,7 +162,7 @@ export class CookieJar {
     if (options) {
       const matchedCookies: Cookie[] = [];
       const removeCookies: Cookie[] = [];
-      for (const [index, cookie] of this.cookies.entries()) {
+      for (const cookie of this.cookies) {
         if (cookieMatches(options, cookie)) {
           if (!cookie.isExpired()) {
             matchedCookies.push(cookie);
