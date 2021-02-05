@@ -1,6 +1,18 @@
 
 # Changelog
 
+## v2.2.2
+
+- also set cookie path from url's pathname if path is not defined inside cookie string.
+
+## v2.2.1
+
+- update readme
+
+## v2.2.0
+
+- add replaceCookies method
+
 ## v2.1.1
 
 - sets cookie header with a more precise approach.

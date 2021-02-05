@@ -336,6 +336,10 @@ export class Cookie {
     this.domain = parseURL(url).host;
   }
 
+  setPath(url: string | Request | URL) {
+    this.path = parseURL(url).pathname;
+  }
+
   setExpires(exp: Date | number) {
     if (exp instanceof Date) {
       this.expires = exp.getTime();

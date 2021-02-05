@@ -113,8 +113,13 @@ export class CookieJar {
     } else {
       cookieObj = cookie;
     }
-    if (!cookieObj.domain && url) {
-      cookieObj.setDomain(url);
+    if (url) {
+      if (!cookieObj.domain) {
+        cookieObj.setDomain(url);
+      }
+      if (!cookieObj.path) {
+        cookieObj.setPath(url);
+      }
     }
     const foundCookie = this.getCookie(cookieObj);
     if (foundCookie) {
