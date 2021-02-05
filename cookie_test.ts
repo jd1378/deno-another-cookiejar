@@ -39,7 +39,6 @@ Deno.test("Cookie constructor", () => {
 });
 
 Deno.test("Cookie constructor (empty)", () => {
-  const dateValue = Date.now();
   const testCookie = new Cookie();
   assertEquals(testCookie.domain, undefined);
   assertEquals(testCookie.httpOnly, undefined);
