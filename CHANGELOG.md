@@ -6,6 +6,7 @@
 - fix expires not being added to cookie.toString()
 - remove unnecessary array replacement when sorting.
 - remove unnecessary assignments
+- fixed some other code smells
 
 ## v2.2.2
 
