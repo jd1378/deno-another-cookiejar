@@ -3,7 +3,7 @@
 
 ## v2.2.2
 
-- also set cookie path from url's pathname if path is not defined inside cookie string.
+- `CookieJar.setCookie()`: set cookie path from url's pathname if path is not defined inside cookie string (or Cookie). (it was already done for domain.)
 
 ## v2.2.1
 
