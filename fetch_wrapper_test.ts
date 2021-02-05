@@ -1,5 +1,4 @@
 import {
-  assert,
   assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 import { serve, Server } from "https://deno.land/std@0.85.0/http/server.ts";
