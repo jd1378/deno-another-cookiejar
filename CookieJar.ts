@@ -104,7 +104,8 @@ export class CookieJar {
    * Sets or replaces a cookie inside the jar. 
    * Only sets new cookies if cookie is valid and not expired.
    * Validation and expiration checks are not run when replacing a cookie.
-   * @param url - the url that this cookie from received from. mainly used by the fetch wrapper
+   * @param url - the url that this cookie from received from. mainly used by the fetch wrapper. 
+   *              will automatically set domain and path if provided and it was not found inside Cookie/cookiestring.
    */
   setCookie(cookie: Cookie | string, url?: string | Request | URL) {
     let cookieObj;
