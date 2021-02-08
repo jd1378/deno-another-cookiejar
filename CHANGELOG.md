@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.2.4
+
+- export CookieOptions type
+
 ## v2.2.3
 
 - fix expires not being added to cookie.toString()
