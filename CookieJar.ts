@@ -242,8 +242,9 @@ export class CookieJar {
       if (typeof (cookies[0] as Cookie).isValid === "function") {
         this.cookies = cookies as Array<Cookie>;
       } else {
-        for (const cookie of cookies) {
-          this.cookies.push(new Cookie(cookie));
+        this.cookies = [];
+        for (const option of cookies) {
+          this.cookies.push(new Cookie(option));
         }
       }
     } else {
