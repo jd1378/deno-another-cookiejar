@@ -1,6 +1,11 @@
 
 # Changelog
 
+## v2.2.5
+
+- fix fix replaceCookies for when an array of CookieOptions is used.
+- add tests for case above
+
 ## v2.2.4
 
 - export CookieOptions type
