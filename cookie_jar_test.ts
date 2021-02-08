@@ -347,7 +347,7 @@ Deno.test("CookieJar replaceCookies()", () => {
   const cookie1 = Cookie.from(cookieStr1);
   const cookie2 = Cookie.from(cookieStr2);
 
-  const cookieJar = new CookieJar([
+  let cookieJar = new CookieJar([
     cookie1,
     cookie2,
   ]);
@@ -371,6 +371,23 @@ Deno.test("CookieJar replaceCookies()", () => {
   assertStrictEquals(
     cookieJar.cookies[0],
     cookie1,
+  );
+
+  cookieJar = new CookieJar([
+    cookie1,
+    cookie2,
+  ]);
+  cookieJar.replaceCookies([{
+    name: "foo",
+    value: "bar",
+  }]);
+  assertStrictEquals(
+    cookieJar.cookies.length,
+    1,
+  );
+  assertStrictEquals(
+    cookieJar.cookies[0].getCookieString(),
+    "foo=bar",
   );
 });
 
