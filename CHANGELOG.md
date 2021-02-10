@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.2.6
+
+- renamed file names. does not affect exports.
+
 ## v2.2.5
 
 - fix fix replaceCookies for when an array of CookieOptions is used.
