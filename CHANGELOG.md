@@ -1,6 +1,11 @@
 
 # Changelog
 
+## v3.0.0
+
+- BREAKING CHANGE: rename fetch wrapper option `fetchFn` to `fetch`.
+- export type WrapFetchOptions.
+
 ## v2.2.7
 
 - renamed the left out Cookie.ts file.

@@ -1,22 +1,24 @@
 import { CookieJar } from "./cookie_jar.ts";
 import { setHeader } from "./header_utils.ts";
 
-/**
- * @param options - Wrap options
- * @param options.cookieJar - The cookie jar to use when wrapping fetch. Will create a new one if not provided
- * @param options.fetchFn - If no `fetchFn` is provided, will default to global fetch.
- *  This allows wrapping your fetch function multiple times.
- */
-export function wrapFetch(
-  { cookieJar = new CookieJar(), fetchFn = fetch } = {},
-) {
+export type WrapFetchOptions = {
+  /** your own fetch function. defaults to global fetch. This allows wrapping your fetch function multiple times. */
+  fetch?: typeof fetch;
+  /** The cookie jar to use when wrapping fetch. Will create a new one if not provided. */
+  cookieJar?: CookieJar;
+};
+
+export function wrapFetch(options: WrapFetchOptions) {
+  const { cookieJar = new CookieJar(), fetch = globalThis.fetch } = options ||
+    {};
+
   async function wrappedFetch(
     input: string | Request | URL,
     init?: RequestInit | undefined,
   ) {
     // let fetch handle the error
     if (!input) {
-      return await fetchFn(input);
+      return await fetch(input);
     }
     const cookieString = cookieJar.getCookieString(input);
     const interceptedInit = init || {};
@@ -26,7 +28,7 @@ export function wrapFetch(
 
     setHeader(interceptedInit.headers, "cookie", cookieString);
 
-    const response = await fetchFn(input, interceptedInit);
+    const response = await fetch(input, interceptedInit);
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() === "set-cookie") {
         cookieJar.setCookie(value, input);
