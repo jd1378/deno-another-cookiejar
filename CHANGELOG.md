@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v2.2.7
+
+- renamed the left out Cookie.ts file.
+
 ## v2.2.6
 
 - renamed file names. does not affect exports.
