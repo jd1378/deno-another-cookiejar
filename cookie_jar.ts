@@ -3,7 +3,7 @@ import {
   CookieOptions,
   isSameDomainOrSubdomain,
   parseURL,
-} from "./Cookie.ts";
+} from "./cookie.ts";
 
 const strictMatchProps = [
   "value",

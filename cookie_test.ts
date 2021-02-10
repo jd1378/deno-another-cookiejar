@@ -1,4 +1,4 @@
-import { Cookie } from "./Cookie.ts";
+import { Cookie } from "./cookie.ts";
 import {
   assert,
   assertEquals,

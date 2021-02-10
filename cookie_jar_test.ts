@@ -1,5 +1,5 @@
-import { Cookie } from "./Cookie.ts";
-import { CookieJar } from "./CookieJar.ts";
+import { Cookie } from "./cookie.ts";
+import { CookieJar } from "./cookie_jar.ts";
 import {
   assertEquals,
   assertNotEquals,

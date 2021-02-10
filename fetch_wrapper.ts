@@ -1,4 +1,4 @@
-import { CookieJar } from "./CookieJar.ts";
+import { CookieJar } from "./cookie_jar.ts";
 import { setHeader } from "./header_utils.ts";
 
 /**

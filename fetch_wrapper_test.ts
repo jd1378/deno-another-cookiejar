@@ -2,8 +2,8 @@ import {
   assertStrictEquals,
 } from "https://deno.land/std@0.85.0/testing/asserts.ts";
 import { serve, Server } from "https://deno.land/std@0.85.0/http/server.ts";
-import { CookieJar } from "./CookieJar.ts";
-import { wrapFetch } from "./FetchWrapper.ts";
+import { CookieJar } from "./cookie_jar.ts";
+import { wrapFetch } from "./fetch_wrapper.ts";
 import { delay } from "https://deno.land/std@0.85.0/async/delay.ts";
 
 let server1: Server | undefined;
