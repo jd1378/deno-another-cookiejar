@@ -299,8 +299,12 @@ Deno.test("CookieJar.getCookieString()", () => {
   ]);
 
   assertStrictEquals(
-    cookieJar.getCookieString("example.com"),
+    cookieJar.getCookieString("example.com/sth"),
     "test=nop; foo=bar",
+  );
+  assertStrictEquals(
+    cookieJar.getCookieString("example.com/sthelse"),
+    "",
   );
   assertStrictEquals(
     cookieJar.getCookieString("notexample.com"),
@@ -323,7 +327,7 @@ Deno.test("CookieJar json serialization", () => {
 
   // our before-serialized jar
   assertStrictEquals(
-    cookieJar.getCookieString("example.com"),
+    cookieJar.getCookieString("example.com/sth"),
     "test=nop; foo=bar",
   );
   assertStrictEquals(
@@ -332,7 +336,7 @@ Deno.test("CookieJar json serialization", () => {
   );
   // our new parsed cookie jar
   assertStrictEquals(
-    newCookieJar.getCookieString("example.com"),
+    newCookieJar.getCookieString("example.com/sth"),
     "test=nop; foo=bar",
   );
   assertStrictEquals(
