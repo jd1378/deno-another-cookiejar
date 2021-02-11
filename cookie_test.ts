@@ -117,19 +117,19 @@ Deno.test("Cookie.clone()", () => {
 
 Deno.test("Cookie.canSendTo()", () => {
   let testCookie = new Cookie();
-  testCookie.setDomain("http://www.example.com");
+  testCookie.setDomain("www.example.com");
 
   // check cookie can be sent to current domain and its subdomains
-  assertStrictEquals(testCookie.canSendTo("http://www.example.com"), true);
-  assertStrictEquals(testCookie.canSendTo("http://example.com"), true);
+  assertStrictEquals(testCookie.canSendTo("www.example.com"), true);
+  assertStrictEquals(testCookie.canSendTo("example.com"), true);
 
   // check cookie can not be send cross domains:
-  assertStrictEquals(testCookie.canSendTo("http://sub.example.com"), false);
-  assertStrictEquals(testCookie.canSendTo("http://anyexample.com"), false);
+  assertStrictEquals(testCookie.canSendTo("sub.example.com"), false);
+  assertStrictEquals(testCookie.canSendTo("anyexample.com"), false);
 
   // check that secure cookies are only sent over https connections
   testCookie.secure = true;
-  assertStrictEquals(testCookie.canSendTo("http://www.example.com"), false);
+  assertStrictEquals(testCookie.canSendTo("www.example.com"), false);
   assertStrictEquals(testCookie.canSendTo("https://www.example.com"), true);
   testCookie.secure = false;
 
