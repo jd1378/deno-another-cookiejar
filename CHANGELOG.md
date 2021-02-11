@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v4.0.0
+
+- BREAKING CHANGE: implement rfc6265 path matching properly and add test.
+
 ## v3.0.0
 
 - BREAKING CHANGE: rename fetch wrapper option `fetchFn` to `fetch`.
