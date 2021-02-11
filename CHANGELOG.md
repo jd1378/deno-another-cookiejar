@@ -4,6 +4,7 @@
 ## v4.0.0
 
 - BREAKING CHANGE: implement rfc6265 path matching properly and add test.
+- change `CookieJar.getCookieString()` to use `Cookie.canSendTo` function filtering cookies for a url
 
 ## v3.0.0
 
