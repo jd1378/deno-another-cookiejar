@@ -299,9 +299,8 @@ export class Cookie {
 
   /**
    * @param url - the url that we are checking against
-   * @param redirectedTo - are we being redirecting to this url from another domain ?
    */
-  canSendTo(url: string | Request | URL, redirectedTo = false) {
+  canSendTo(url: string | Request | URL) {
     const urlObj = parseURL(url);
 
     if (this.secure && urlObj.protocol !== "https:") {
@@ -343,14 +342,7 @@ export class Cookie {
     if (this.domain) {
       const host = urlObj.host; // 'host' includes port number, if specified
       if (isSameDomainOrSubdomain(this.domain, host)) {
-        // practically sameSite doesn't mean much in this context I believe, but I tried anyway
-        if ((this.sameSite === "Strict" || !this.sameSite) && !redirectedTo) {
-          return true;
-        } else if (this.sameSite === "Lax") {
-          return true;
-        } else {
-          return true;
-        }
+        return true;
       }
     }
 
