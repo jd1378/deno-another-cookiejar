@@ -114,3 +114,49 @@ Deno.test("Cookie.clone()", () => {
   // not equal in reference
   assert(testCookie != anotherCookie, "error: both have the same reference");
 });
+
+Deno.test("Cookie.canSendTo()", () => {
+  let testCookie = new Cookie();
+  testCookie.setDomain("http://www.example.com");
+
+  // check cookie can be sent to current domain and its subdomains
+  assertStrictEquals(testCookie.canSendTo("http://www.example.com"), true);
+  assertStrictEquals(testCookie.canSendTo("http://example.com"), true);
+
+  // check cookie can not be send cross domains:
+  assertStrictEquals(testCookie.canSendTo("http://sub.example.com"), false);
+  assertStrictEquals(testCookie.canSendTo("http://anyexample.com"), false);
+
+  // check that secure cookies are only sent over https connections
+  testCookie.secure = true;
+  assertStrictEquals(testCookie.canSendTo("http://www.example.com"), false);
+  assertStrictEquals(testCookie.canSendTo("https://www.example.com"), true);
+  testCookie.secure = false;
+
+  // path test
+  testCookie = new Cookie();
+  testCookie.domain = "x.y";
+  testCookie.path = "/one/two";
+
+  // parent
+  assertStrictEquals(testCookie.canSendTo("x.y/one"), false);
+
+  // identical
+  assertStrictEquals(testCookie.canSendTo("x.y/one/two"), true);
+  // ending with /
+  assertStrictEquals(testCookie.canSendTo("x.y/one/two/"), true);
+  // a prefix but does not matches
+  assertStrictEquals(
+    testCookie.canSendTo("x.y/one/twobar"),
+    false,
+  );
+  // sub paths
+  assertStrictEquals(
+    testCookie.canSendTo("x.y/one/two/three"),
+    true,
+  );
+  assertStrictEquals(
+    testCookie.canSendTo("x.y/one/two/three/"),
+    true,
+  );
+});

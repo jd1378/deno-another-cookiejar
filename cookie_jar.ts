@@ -188,10 +188,7 @@ export class CookieJar {
     const targetIsSecure = parseURL(url).protocol.includes("https");
     const cookiesToSend = this.getCookies(searchCookie)
       .filter((cookie) => {
-        if (cookie.secure && !targetIsSecure) {
-          return false;
-        }
-        return true;
+        return cookie.canSendTo(parseURL(url));
       })
       .map((c) => c.getCookieString())
       .join("; ");

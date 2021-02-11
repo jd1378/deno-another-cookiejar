@@ -10,12 +10,12 @@ const COOKIE_NAME_BLOCKED = /[()<>@,;:\\"/[\]?={}.]/;
 const COOKIE_OCTET_BLOCKED = /[\s",;\\]/;
 const COOKIE_OCTET = /^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/;
 
-const VALID_URL = /.\:./;
-
 const TERMINATORS = ["\n", "\r", "\0"];
 
 /**
  * does not make a difference which one is domainA or domainB
+ * 
+ * according to https://stackoverflow.com/a/30676300/3542461
  */
 export function isSameDomainOrSubdomain(domainA?: string, domainB?: string) {
   if (!domainA || !domainB) {
@@ -97,7 +97,7 @@ export function parseURL(input: string | Request | URL) {
   // we *need* to replace the leading dot to simplify usage and expectations
   copyUrl = copyUrl.replace(/^\./, "");
   if (!copyUrl.includes("://")) {
-    // the protocol does not matter
+    // the protocol does not matter, but we default to insecure for use inside canSendTo
     copyUrl = "http://" + copyUrl;
   }
   return new URL(copyUrl);
@@ -301,27 +301,56 @@ export class Cookie {
    * @param url - the url that we are checking against
    * @param redirectedTo - are we being redirecting to this url from another domain ?
    */
-  canSendTo(url: string, redirectedTo = false) {
-    if (!VALID_URL.test(url)) return true; // probably relative url, which is not allowed in deno
-
-    const urlObj = new URL(url);
+  canSendTo(url: string | Request | URL, redirectedTo = false) {
+    const urlObj = parseURL(url);
 
     if (this.secure && urlObj.protocol !== "https:") {
       return false;
     }
 
-    const host = urlObj.host;
-    if (this.sameSite === "None" && this.secure) return true;
-    if (this.domain) {
-      if (this.sameSite === "Strict" || !this.sameSite) {
-        if (isSameDomainOrSubdomain(this.domain, host)) {
-          if (!redirectedTo) {
-            return true;
-          }
-        }
-        return false;
-      } else if (this.sameSite === "Lax") {
+    if (this.sameSite === "None" && !this.secure) return false;
+
+    if (this.path) {
+      if (
+        this.path === urlObj.pathname // identical
+      ) {
         return true;
+      }
+      if (
+        urlObj.pathname.startsWith(this.path) &&
+        this.path[this.path.length - 1] === "/" // any sub path after a '/'
+      ) {
+        return true;
+      }
+      if (
+        this.path.length < urlObj.pathname.length &&
+        urlObj.pathname.startsWith(this.path) &&
+        urlObj.pathname[this.path.length] === "/"
+      ) {
+        return true;
+        // this one was a bit tricky to understand for me
+        // quick explain:
+        // imagin two path where A is the cookie path and B and C is the requested paths:
+        //    A: /foo
+        //    B: /foo/bar --> true
+        //    C: /foobar ---> false
+        // Difference with previous if ? very slight difference, A is /foo/ instead of /foo in the example
+      }
+
+      return false;
+    }
+
+    if (this.domain) {
+      const host = urlObj.host; // 'host' includes port number, if specified
+      if (isSameDomainOrSubdomain(this.domain, host)) {
+        // practically sameSite doesn't mean much in this context I believe, but I tried anyway
+        if ((this.sameSite === "Strict" || !this.sameSite) && !redirectedTo) {
+          return true;
+        } else if (this.sameSite === "Lax") {
+          return true;
+        } else {
+          return true;
+        }
       }
     }
 
