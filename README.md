@@ -9,7 +9,7 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this l
 you can import `Cookie`, `CookieJar`, `wrapFetch` from `mod.ts` file.
 
 ```js
-export { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@v4.0.0/mod.ts';
+import { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@v4.0.0/mod.ts';
 ```
 
 ### wrapFetch
