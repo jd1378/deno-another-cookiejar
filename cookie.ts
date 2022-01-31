@@ -4,7 +4,7 @@
 const CONTROL_CHARS = /[\x00-\x1F\x7F]/;
 
 // with help from https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie and rfc6265
-const COOKIE_NAME_BLOCKED = /[()<>@,;:\\"/[\]?={}.]/;
+const COOKIE_NAME_BLOCKED = /[()<>@,;:\\"/[\]?={}]/;
 
 // cookie octet should not have control characters, Whitespace, double quotes, comma, semicolon, and backslash
 const COOKIE_OCTET_BLOCKED = /[\s",;\\]/;
@@ -14,7 +14,7 @@ const TERMINATORS = ["\n", "\r", "\0"];
 
 /**
  * does not make a difference which one is domainA or domainB
- * 
+ *
  * according to https://stackoverflow.com/a/30676300/3542461
  */
 export function isSameDomainOrSubdomain(domainA?: string, domainB?: string) {
