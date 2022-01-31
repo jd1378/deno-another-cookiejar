@@ -62,8 +62,8 @@ async function closeServers() {
     server1 && server1.close();
     server2 && server2.close();
     handlers.push(
-      fetch(serverOneUrl).then((r) => r.text()).catch((err) => {}),
-      fetch(serverTwoUrl).then((r) => r.text()).catch((err) => {}),
+      fetch(serverOneUrl).then((r) => r.text()).catch(() => {}),
+      fetch(serverTwoUrl).then((r) => r.text()).catch(() => {}),
     );
     await Promise.all(handlers);
     handlers = [];
