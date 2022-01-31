@@ -21,7 +21,7 @@ Deno.test("CookieJar inits with cookies if given", () => {
 
 Deno.test("CookieJar.getCookie()", () => {
   const cookieStr =
-    "__cfduid=0000000000000000000000000000; expires=Tue, 02-Mar-21 11:37:17 GMT; path=/sth; domain=.example.com; HttpOnly; SameSite=Lax; Secure";
+    "__cfduid=0000000000000000000000000000; path=/sth; domain=.example.com; HttpOnly; SameSite=Lax; Secure";
   const cookie = Cookie.from(cookieStr);
   const cookieJar = new CookieJar([cookie]);
 
