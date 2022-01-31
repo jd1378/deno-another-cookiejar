@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v4.0.1
+
+- allow . in cookie name.
+
 ## v4.0.0
 
 - BREAKING CHANGE: implement rfc6265 path matching properly and add test.
