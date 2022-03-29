@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v4.0.2
+
+- fix input type for use on deno 1.20.3
+
 ## v4.0.1
 
 - allow . in cookie name.
