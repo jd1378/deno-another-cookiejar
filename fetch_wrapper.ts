@@ -13,7 +13,7 @@ export function wrapFetch(options: WrapFetchOptions) {
     {};
 
   async function wrappedFetch(
-    input: string | Request | URL,
+    input: string | Request,
     init?: RequestInit | undefined,
   ) {
     // let fetch handle the error
