@@ -1,6 +1,10 @@
 
 # Changelog
 
+## v4.0.3
+
+- fix: Support `=` in cookie value (Thanks @jonasb)
+
 ## v4.0.2
 
 - fix input type for use on deno 1.20.3
