@@ -186,17 +186,19 @@ export class Cookie {
 
     // first split is the key value pair,
     // if theres no semicolon in the string, still the first element in array is key value pair
-    const keyValuePair = trimTerminator(attrAndValueList.shift() || "")
-      .trim()
-      .split("=");
-    if (keyValuePair.length !== 2) {
+    const keyValuePairString = trimTerminator(attrAndValueList.shift() || "")
+      .trim();
+    const keyValuePairEqualsIndex = keyValuePairString.indexOf("=");
+    if (keyValuePairEqualsIndex < 0) {
       return new Cookie();
     }
-    if (!(isValidName(keyValuePair[0]) && isValidValue(keyValuePair[1]))) {
+    const name = keyValuePairString.slice(0, keyValuePairEqualsIndex);
+    const value = keyValuePairString.slice(keyValuePairEqualsIndex + 1);
+    if (!(isValidName(name) && isValidValue(value))) {
       return new Cookie();
     }
-    options.name = keyValuePair[0];
-    options.value = keyValuePair[1];
+    options.name = name;
+    options.value = value;
 
     // now get attributes
     while (attrAndValueList.length) {
