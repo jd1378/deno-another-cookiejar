@@ -71,6 +71,9 @@ function isValidName(name: string | undefined) {
 }
 
 function isValidValue(val: string | undefined) {
+  if (val === "") {
+    return true;
+  }
   if (!val) {
     return false;
   }

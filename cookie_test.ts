@@ -73,6 +73,7 @@ Deno.test("Cookie.from()", () => {
   assertEquals(cookie.sameSite, "Lax");
 
   // other tests
+  assertEquals(Cookie.from("foo=").getCookieString(), "foo=");
   assertEquals(Cookie.from("foo=bar; ").getCookieString(), "foo=bar");
   assertEquals(Cookie.from("foo=bar;").getCookieString(), "foo=bar");
   assertEquals(Cookie.from("foo=bar").getCookieString(), "foo=bar");
