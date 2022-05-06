@@ -1,6 +1,14 @@
 
 # Changelog
 
+## v4.1.0
+
+- feat: Support double quote wrapping of value (foo="bar")
+- fix: Support empty cookie value
+- fix: Clear existing matching cookie when setting expired cookie
+
+Thanks @jonasb
+
 ## v4.0.3
 
 - fix: Support `=` in cookie value (Thanks @jonasb)
