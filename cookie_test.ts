@@ -79,6 +79,8 @@ Deno.test("Cookie.from()", () => {
   assertEquals(Cookie.from("foo=bar").getCookieString(), "foo=bar");
   assertEquals(Cookie.from("foo=bar").toString(), "foo=bar");
   assertEquals(Cookie.from("foo=bar===").toString(), "foo=bar===");
+  assertEquals(Cookie.from('foo=""').toString(), "foo=");
+  assertEquals(Cookie.from('foo="bar"').toString(), "foo=bar");
 });
 
 Deno.test("Cookie json serialization", () => {
