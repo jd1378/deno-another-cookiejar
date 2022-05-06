@@ -435,6 +435,29 @@ Deno.test("CookieJar.setCookie() replaces old cookie completely", () => {
   );
 });
 
+Deno.test("CookieJar.setCookie() clears cookie if cookie has expired (empty value)", () => {
+  const cookieStr1 = "foo=bar; path=/sth; domain=.example.com";
+  const cookie1 = Cookie.from(cookieStr1);
+
+  const cookieJar = new CookieJar([
+    cookie1,
+  ]);
+  assertEquals(
+    cookieJar.getCookies().length,
+    1,
+  );
+
+  cookieJar.setCookie(
+    Cookie.from(
+      "foo=; Expires=Thu, 01-Jan-1970 00:00:10 GMT;path=/sth; domain=.example.com",
+    ),
+  );
+  assertEquals(
+    cookieJar.getCookies().length,
+    0,
+  );
+});
+
 Deno.test("CookieJar.setCookie() adds cookie if name matches but path or domain do not match", () => {
   const cookieStr1 = "foo=bar; path=/sth; domain=.example.com";
   const cookie1 = Cookie.from(cookieStr1);
