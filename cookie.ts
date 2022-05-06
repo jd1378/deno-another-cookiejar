@@ -70,7 +70,18 @@ function isValidName(name: string | undefined) {
   return true;
 }
 
+function trimWrappingDoubleQuotes(val: string) {
+  // the value can be wrapped in double quotes, but can't contain double quotes within the value
+  if (val.length >= 2 && val.at(0) === '"' && val.at(-1) === '"') {
+    return val.slice(1, -1);
+  }
+  return val;
+}
+
 function isValidValue(val: string | undefined) {
+  if (val === "") {
+    return true;
+  }
   if (!val) {
     return false;
   }
@@ -193,7 +204,10 @@ export class Cookie {
       return new Cookie();
     }
     const name = keyValuePairString.slice(0, keyValuePairEqualsIndex);
-    const value = keyValuePairString.slice(keyValuePairEqualsIndex + 1);
+    const value = trimWrappingDoubleQuotes(
+      keyValuePairString.slice(keyValuePairEqualsIndex + 1),
+    );
+
     if (!(isValidName(name) && isValidValue(value))) {
       return new Cookie();
     }

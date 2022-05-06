@@ -122,11 +122,20 @@ export class CookieJar {
         cookieObj.setPath(url);
       }
     }
+
+    if (!cookieObj.isValid()) {
+      return;
+    }
+
     const foundCookie = this.getCookie(cookieObj);
     if (foundCookie) {
       const indexOfCookie = this.cookies.indexOf(foundCookie);
-      this.cookies.splice(indexOfCookie, 1, cookieObj);
-    } else if (cookieObj.isValid() && !cookieObj.isExpired()) {
+      if (!cookieObj.isExpired()) {
+        this.cookies.splice(indexOfCookie, 1, cookieObj);
+      } else {
+        this.cookies.splice(indexOfCookie, 1);
+      }
+    } else if (!cookieObj.isExpired()) {
       this.cookies.push(cookieObj);
     }
 
