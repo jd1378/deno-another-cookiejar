@@ -374,7 +374,19 @@ export class Cookie {
   }
 
   setPath(url: string | Request | URL) {
-    this.path = parseURL(url).pathname;
+    // https://www.rfc-editor.org/rfc/rfc6265#section-5.1.4
+    const uriPath = parseURL(url).pathname; // step 1
+
+    if (!uriPath || uriPath[0] !== "/") { // step 2
+      this.path = "/";
+    } else {
+      const rightmostSlashIdx = uriPath.lastIndexOf("/");
+      if (rightmostSlashIdx <= 0) { // step 3
+        this.path = "/";
+      } else { // step 4
+        this.path = uriPath.slice(0, rightmostSlashIdx);
+      }
+    }
   }
 
   setExpires(exp: Date | number) {

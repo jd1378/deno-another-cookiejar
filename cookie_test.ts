@@ -164,3 +164,25 @@ Deno.test("Cookie.canSendTo()", () => {
     true,
   );
 });
+
+Deno.test("Cookie.setPath() works according to RFC6265 5.1.4", () => {
+  const testCookie = new Cookie();
+
+  testCookie.setPath("http://x.y");
+  assertStrictEquals(testCookie.path, "/");
+
+  testCookie.setPath("http://x.y/");
+  assertStrictEquals(testCookie.path, "/");
+
+  testCookie.setPath("http://x.y/one");
+  assertStrictEquals(testCookie.path, "/");
+
+  testCookie.setPath("http://x.y/one/");
+  assertStrictEquals(testCookie.path, "/one");
+
+  testCookie.setPath("http://x.y/one/two");
+  assertStrictEquals(testCookie.path, "/one");
+
+  testCookie.setPath("http://x.y/one/two/");
+  assertStrictEquals(testCookie.path, "/one/two");
+});
