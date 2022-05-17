@@ -52,7 +52,7 @@
         "--allow-all",
         "--allow-env"
       ],
-      "outputCapture": "std",
+      "outputCapture": "std"
     }
   ]
 }

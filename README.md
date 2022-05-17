@@ -1,15 +1,21 @@
 # deno-another-cookiejar
 
-This library offers a fetch wrapper that retain cookies. This library also provides a simple cookiejar;
+This library offers a fetch wrapper that retain cookies. This library also
+provides a simple cookiejar;
 
-Why the name ? because I didn't want to reserve the cookiejar name, since this library may not be good at it. (But I hope you like it)
+Why the name ? because I didn't want to reserve the cookiejar name, since this
+library may not be good at it. (But I hope you like it)
 
 ## usage
 
 you can import `Cookie`, `CookieJar`, `wrapFetch` from `mod.ts` file.
 
 ```js
-import { Cookie, CookieJar, wrapFetch} from 'https://deno.land/x/another_cookiejar@v4.1.0/mod.ts';
+import {
+  Cookie,
+  CookieJar,
+  wrapFetch,
+} from "https://deno.land/x/another_cookiejar@v4.1.0/mod.ts";
 ```
 
 ### wrapFetch
@@ -30,8 +36,8 @@ const fetch = wrapFetch({ cookieJar });
 fetch("http://example.com");
 // and you can read your cookies from the jar
 cookieJar.getCookie({
-  name: 'cookieName',
-})?.value // your cookie value
+  name: "cookieName",
+})?.value; // your cookie value
 ```
 
 You can play around with it too see what it has to offer!
@@ -47,14 +53,14 @@ you can create cookies in two ways:
 ```js
 // first: using Cookie constructor with CookieOptions
 const cookie = new Cookie({
-  name: 'foo',
-  value: 'bar'
+  name: "foo",
+  value: "bar",
 });
 ```
 
 ```js
-// second: 
-const cookie = Cookie.from('foo=bar;'); // any string from Set-Cookie header value is also valid.
+// second:
+const cookie = Cookie.from("foo=bar;"); // any string from Set-Cookie header value is also valid.
 ```
 
 ### CookieJar
@@ -71,25 +77,25 @@ const cookieJar = new CookieJar(cookiesArray); // cookiesArray: Array<Cookie> | 
 
 #### Note on retrieving cookies (+v2.0.0)
 
-You can get cookies using either `CookieOptions` or a `Cookie` itself.
-The difference is if you use `CookieOptions`, it will strictly check any prop that is passed against the cookie.
-But if you use a `Cookie` object, it will only check `name`, `path` and `domain`.
+You can get cookies using either `CookieOptions` or a `Cookie` itself. The
+difference is if you use `CookieOptions`, it will strictly check any prop that
+is passed against the cookie. But if you use a `Cookie` object, it will only
+check `name`, `path` and `domain`.
 
 ### JSON serializing `Cookie`
 
 Each cookie object is easily serialized and deserialized. Example:
 
 ```js
-const exampleOption = { name: 'foo' , value: 'bar' };
+const exampleOption = { name: "foo", value: "bar" };
 
 const myCookie = new Cookie(exampleOption);
 
-new Cookie ( 
+new Cookie(
   JSON.parse(
-    JSON.stringify(myCookie)
-  )
+    JSON.stringify(myCookie),
+  ),
 ).toString() === myCookie.toString(); // true
-
 ```
 
 ### JSON serializing `CookieJar`
@@ -97,16 +103,16 @@ new Cookie (
 You can even easily serialize your `CookierJar`. Example:
 
 ```js
-const exampleOption = { name: 'foo' , value: 'bar' };
+const exampleOption = { name: "foo", value: "bar" };
 
 const myCookie = new Cookie(exampleOption);
 
 const cookieJar = new CookieJar([myCookie]);
 
-new CookieJar (
+new CookieJar(
   JSON.parse(
-    JSON.stringify(cookieJar)
-  )
+    JSON.stringify(cookieJar),
+  ),
 ).cookies[0].toString() === myCookie.toString(); // true
 ```
 
@@ -118,8 +124,10 @@ run with `deno test --allow-net`
 
 ## notes
 
-This library is only tested lightly. you can contribute to this if you want to make it better, but I probably won't add much feature/test anymore.
+This library is only tested lightly. you can contribute to this if you want to
+make it better, but I probably won't add much feature/test anymore.
 
-This library does not strictly follow the specs, but does try to follow it loosely. just keep it in mind when using so you don't get surprises.
+This library does not strictly follow the specs, but does try to follow it
+loosely. just keep it in mind when using so you don't get surprises.
 
 does not support handling of `__Secure-` and `__Host-` cookies.

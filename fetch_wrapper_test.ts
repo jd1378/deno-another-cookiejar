@@ -17,7 +17,7 @@ handlers = [];
 
 async function handleServer1() {
   await delay(100);
-  server1 = serve({ hostname: "0.0.0.0", port: 54933 });
+  server1 = serve({ hostname: "localhost", port: 54933 });
   for await (const request of server1) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";
@@ -34,7 +34,7 @@ async function handleServer1() {
 
 async function handleServer2() {
   await delay(100);
-  server2 = serve({ hostname: "0.0.0.0", port: 54934 });
+  server2 = serve({ hostname: "localhost", port: 54934 });
   for await (const request of server2) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";

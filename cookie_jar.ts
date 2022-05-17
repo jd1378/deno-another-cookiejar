@@ -60,7 +60,7 @@ const MAX_TIME = 2147483647000; // 31-bit max
 /**
  *  Cookies with longer paths are listed before cookies with
  *  shorter paths.
- * 
+ *
  *  Among cookies that have equal-length path fields, cookies with
  *  earlier creation-times are listed before cookies with later
  *  creation-times."
@@ -101,10 +101,10 @@ export class CookieJar {
   }
 
   /**
-   * Sets or replaces a cookie inside the jar. 
+   * Sets or replaces a cookie inside the jar.
    * Only sets new cookies if cookie is valid and not expired.
    * Validation and expiration checks are not run when replacing a cookie.
-   * @param url - the url that this cookie from received from. mainly used by the fetch wrapper. 
+   * @param url - the url that this cookie from received from. mainly used by the fetch wrapper.
    *              will automatically set domain and path if provided and it was not found inside Cookie/cookiestring.
    */
   setCookie(cookie: Cookie | string, url?: string | Request | URL) {
@@ -143,7 +143,7 @@ export class CookieJar {
     this.cookies.sort(cookieCompare);
   }
 
-  /** 
+  /**
    * Gets the first cooking matching the defined properties of a given Cookie or CookieOptions.
    * returns undefined if not found or expired. `creationDate` prop is not checked.
    * Also removes the cookie and returns undefined if cookie is expired.
@@ -208,8 +208,8 @@ export class CookieJar {
   }
 
   /**
-   * Removes first cookie that matches the given option. 
-   * 
+   * Removes first cookie that matches the given option.
+   *
    * Returns the deleted cookie if found or undefined otherwise.
    */
   removeCookie(options: CookieOptions | Cookie): Cookie | undefined {
@@ -223,13 +223,13 @@ export class CookieJar {
   /**
    * Removes all cookies that matches the given option.
    * If options is not given, all cookies will be deleted.
-   * 
+   *
    * Returns the deleted cookies if found or undefined otherwise.
    */
   removeCookies(options?: CookieOptions | Cookie): Array<Cookie> | undefined {
     if (options) {
       const deletedCookies: Cookie[] = [];
-      this.cookies = this.cookies.filter((cookie, index) => {
+      this.cookies = this.cookies.filter((cookie) => {
         if (cookieMatches(options, cookie)) {
           deletedCookies.push(cookie);
           return false;

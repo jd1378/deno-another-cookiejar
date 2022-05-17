@@ -1,4 +1,3 @@
-
 # Changelog
 
 ## v4.1.0
@@ -24,7 +23,8 @@ Thanks @jonasb
 ## v4.0.0
 
 - BREAKING CHANGE: implement rfc6265 path matching properly and add test.
-- change `CookieJar.getCookieString()` to use `Cookie.canSendTo` function filtering cookies for a url
+- change `CookieJar.getCookieString()` to use `Cookie.canSendTo` function
+  filtering cookies for a url
 
 ## v3.0.0
 
@@ -57,7 +57,8 @@ Thanks @jonasb
 
 ## v2.2.2
 
-- `CookieJar.setCookie()`: set cookie path from url's pathname if path is not defined inside cookie string (or Cookie). (it was already done for domain.)
+- `CookieJar.setCookie()`: set cookie path from url's pathname if path is not
+  defined inside cookie string (or Cookie). (it was already done for domain.)
 
 ## v2.2.1
 
@@ -73,7 +74,8 @@ Thanks @jonasb
 
 ## v2.1.0
 
-- add `fetchFn` to wrap options. this allows you to wrap your fetch multiple times to add other helpers.
+- add `fetchFn` to wrap options. this allows you to wrap your fetch multiple
+  times to add other helpers.
 
 ## v2.0.1
 
@@ -81,6 +83,8 @@ Thanks @jonasb
 
 ## v2.0.0
 
-- now `value`, `secure`, `httpOnly`, `maxAge`, `expires`, `sameSite` props will only be strictly checked only if
-  when retrieving the cookies using `CookieOptions`, which means if you pass a cookie,
-  it will only be checked if `name`, `path` and `domain` match. This should solve issue of replacing cookies.
+- now `value`, `secure`, `httpOnly`, `maxAge`, `expires`, `sameSite` props will
+  only be strictly checked only if when retrieving the cookies using
+  `CookieOptions`, which means if you pass a cookie, it will only be checked if
+  `name`, `path` and `domain` match. This should solve issue of replacing
+  cookies.
