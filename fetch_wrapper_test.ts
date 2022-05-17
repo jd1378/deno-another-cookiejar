@@ -8,19 +8,20 @@ import { delay } from "https://deno.land/std@0.85.0/async/delay.ts";
 
 const server1Port = 8001;
 const server2Port = 8002;
+const serverAddress = "127.0.0.1";
 
 let server1: Server | undefined;
-const serverOneUrl = "http://localhost:" + server1Port;
+const serverOneUrl = `http://${serverAddress}:${server1Port}`;
 
 let server2: Server | undefined;
-const serverTwoUrl = "http://localhost:" + server2Port;
+const serverTwoUrl = `http://${serverAddress}:${server2Port}`;
 
 let handlers: Promise<void | string>[];
 handlers = [];
 
 async function handleServer1() {
   await delay(100);
-  server1 = serve({ hostname: "localhost", port: server1Port });
+  server1 = serve({ hostname: serverAddress, port: server1Port });
   for await (const request of server1) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";
@@ -37,7 +38,7 @@ async function handleServer1() {
 
 async function handleServer2() {
   await delay(100);
-  server2 = serve({ hostname: "localhost", port: server2Port });
+  server2 = serve({ hostname: serverAddress, port: server2Port });
   for await (const request of server2) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";
@@ -54,8 +55,8 @@ async function handleServer2() {
 
 console.log(
   "Test HTTP webserver running at:",
-  "http://localhost:" + server1Port,
-  "http://localhost:" + server2Port,
+  serverOneUrl,
+  serverTwoUrl,
 );
 console.log('GET "/" echos "cookie" header, GET "/set1" sets two cookies');
 
