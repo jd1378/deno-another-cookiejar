@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.1
+
+- fix: Implement default path algorithm
+
+Thanks @bgoscinski
+
 ## v4.1.0
 
 - feat: Support double quote wrapping of value (foo="bar")
