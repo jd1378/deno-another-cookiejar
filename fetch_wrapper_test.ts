@@ -1,56 +1,104 @@
 import {
   assertStrictEquals,
-} from "https://deno.land/std@0.85.0/testing/asserts.ts";
-import { serve, Server } from "https://deno.land/std@0.85.0/http/server.ts";
+} from "https://deno.land/std@0.139.0/testing/asserts.ts";
 import { CookieJar } from "./cookie_jar.ts";
 import { wrapFetch } from "./fetch_wrapper.ts";
-import { delay } from "https://deno.land/std@0.85.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.139.0/async/delay.ts";
 
-const server1Port = 8001;
-const server2Port = 8002;
-const serverAddress = "127.0.0.1";
-
-let server1: Server | undefined;
-const serverOneUrl = `http://${serverAddress}:${server1Port}`;
-
-let server2: Server | undefined;
-const serverTwoUrl = `http://${serverAddress}:${server2Port}`;
-
-let handlers: Promise<void | string>[];
-handlers = [];
-
-async function handleServer1() {
-  await delay(100);
-  server1 = serve({ hostname: serverAddress, port: server1Port });
-  for await (const request of server1) {
-    if (request.url === "/") {
-      const bodyContent = request.headers.get("cookie") || "";
-      await request.respond({ status: 200, body: bodyContent });
-    } else if (request.url === "/set1") {
-      const headers = new Headers();
-      headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
-      headers.append("Set-Cookie", "baz=thud; Path=/; Secure");
-
-      await request.respond({ status: 200, body: "ok", headers });
+function drop(resourceName: string) {
+  const rt: Deno.ResourceMap = Deno.resources();
+  for (const rid in rt) {
+    if (rt[rid] == resourceName) {
+      try {
+        Deno.close(Number(rid));
+        return true;
+      } catch {
+        return false;
+      }
     }
   }
 }
 
-async function handleServer2() {
-  await delay(100);
-  server2 = serve({ hostname: serverAddress, port: server2Port });
-  for await (const request of server2) {
-    if (request.url === "/") {
-      const bodyContent = request.headers.get("cookie") || "";
-      await request.respond({ status: 200, body: bodyContent });
-    } else if (request.url === "/set1") {
-      const headers = new Headers();
-      headers.append("Set-Cookie", "echo=one; Path=/; HttpOnly");
-      headers.append("Set-Cookie", "third=echo; Path=/; Secure");
+const serverOnePort = 53250;
+const serverTwoPort = 53251;
+const serverHostname = "127.0.0.1";
 
-      await request.respond({ status: 200, body: "ok", headers });
-    }
+const serverOneOptions = {
+  hostname: serverHostname,
+  port: serverOnePort,
+};
+
+const serverTwoOptions = {
+  hostname: serverHostname,
+  port: serverTwoPort,
+};
+
+const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
+
+const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
+
+function serverHandler(request: Request): Response {
+  if (new URL(request.url).pathname === "/set1") {
+    const headers = new Headers();
+    headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
+    headers.append("Set-Cookie", "baz=thud; Path=/; Secure");
+    return new Response("ok", { status: 200, headers });
+  } else if (new URL(request.url).pathname === "/set2") {
+    const headers = new Headers();
+    headers.append("Set-Cookie", "echo=one; Path=/; HttpOnly");
+    headers.append("Set-Cookie", "third=echo; Path=/; Secure");
+    return new Response("ok", { status: 200, headers });
+  } else {
+    const bodyContent = request.headers.get("cookie") || "";
+    return new Response(bodyContent, { status: 200 });
   }
+}
+
+type ListenAndServeOptions = {
+  hostname: string;
+  port: number;
+  abortController: AbortController;
+};
+
+async function listenAndServe(options: ListenAndServeOptions) {
+  const { hostname, port, abortController } = options;
+
+  const listener = Deno.listen({ hostname, port });
+
+  const handleAbort = () => {
+    abortController.signal.removeEventListener("abort", handleAbort);
+    listener.close();
+    drop("httpConn");
+  };
+
+  abortController.signal.addEventListener("abort", handleAbort);
+
+  try {
+    for await (const conn of listener) {
+      for await (
+        const { respondWith, request } of Deno.serveHttp(conn)
+      ) {
+        respondWith(serverHandler(request));
+      }
+    }
+  } catch {
+    drop("httpConn");
+  }
+}
+
+function runServer(
+  options: Omit<ListenAndServeOptions, "abortController">,
+) {
+  const abortController = new AbortController();
+  listenAndServe({
+    ...options,
+    abortController,
+  }).catch((e) => {
+    abortController.abort();
+    delay(10);
+    throw e;
+  });
+  return abortController;
 }
 
 console.log(
@@ -60,37 +108,22 @@ console.log(
 );
 console.log('GET "/" echos "cookie" header, GET "/set1" sets two cookies');
 
-async function closeServers() {
-  try {
-    //send a dummy req after close to close the server
-    server1 && server1.close();
-    server2 && server2.close();
-    handlers.push(
-      fetch(serverOneUrl).then((r) => r.text()).catch(() => {}),
-      fetch(serverTwoUrl).then((r) => r.text()).catch(() => {}),
-    );
-    await Promise.all(handlers);
-    handlers = [];
-    server1 = undefined;
-    server2 = undefined;
-  } catch {
-    //
-  }
-}
-
 Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
-  handlers.push(handleServer1());
-  const cookieJar = new CookieJar();
-  const wrappedFetch = wrapFetch({ cookieJar });
-  await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
-  assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
-  assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
-  await closeServers();
+  const abortController = runServer(serverOneOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
+    assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
+  } finally {
+    abortController.abort();
+  }
 });
 
 Deno.test("WrappedFetch merges headers with cookie header", async () => {
+  const abortController = runServer(serverOneOptions);
   try {
-    handlers.push(handleServer1());
     const cookieJar = new CookieJar();
     const wrappedFetch = wrapFetch({ cookieJar });
     await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
@@ -123,50 +156,57 @@ Deno.test("WrappedFetch merges headers with cookie header", async () => {
 
     assertStrictEquals(cookieString, "foo=bar");
   } finally {
-    await closeServers();
+    abortController.abort();
   }
 });
 
 Deno.test("WrappedFetch doesn't send secure cookies over unsecure urls", async () => {
-  handlers.push(handleServer1());
-  const cookieJar = new CookieJar();
-  const wrappedFetch = wrapFetch({ cookieJar });
-  await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
-  assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
-  assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
+  const abortController = runServer(serverOneOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
+    assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
 
-  // since `baz` cookie is secure, it should not be sent with fetch
-  assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.secure, true);
-  const cookieString = await wrappedFetch(serverOneUrl + "/").then((r) =>
-    r.text()
-  );
-  assertStrictEquals(cookieString, "foo=bar");
-  await closeServers();
+    // since `baz` cookie is secure, it should not be sent with fetch
+    assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.secure, true);
+    const cookieString = await wrappedFetch(serverOneUrl + "/").then((r) =>
+      r.text()
+    );
+    assertStrictEquals(cookieString, "foo=bar");
+  } finally {
+    abortController.abort();
+  }
 });
 
 Deno.test("Cookies are not send cross domain", async () => {
-  handlers.push(handleServer1());
-  handlers.push(handleServer2());
-  const cookieJar = new CookieJar();
-  const wrappedFetch = wrapFetch({ cookieJar });
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
 
-  // server 1
-  await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
-  assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
-  assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
+    // server 1
+    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
+    assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
 
-  // server 2
-  await wrappedFetch(serverTwoUrl + "/set1").then((r) => r.text());
-  assertStrictEquals(cookieJar.getCookie({ name: "echo" })?.value, "one");
-  assertStrictEquals(cookieJar.getCookie({ name: "third" })?.value, "echo");
+    // server 2
+    await wrappedFetch(serverTwoUrl + "/set2").then((r) => r.text());
+    assertStrictEquals(cookieJar.getCookie({ name: "echo" })?.value, "one");
+    assertStrictEquals(cookieJar.getCookie({ name: "third" })?.value, "echo");
 
-  // we got all the cookies, not should try to see if we send them right
-  let cookieString;
-  // try server1
-  cookieString = await wrappedFetch(serverOneUrl + "/").then((r) => r.text());
-  assertStrictEquals(cookieString, "foo=bar");
-  // try server2
-  cookieString = await wrappedFetch(serverTwoUrl + "/").then((r) => r.text());
-  assertStrictEquals(cookieString, "echo=one");
-  await closeServers();
+    // we got all the cookies, not should try to see if we send them right
+    let cookieString;
+    // try server1
+    cookieString = await wrappedFetch(serverOneUrl + "/").then((r) => r.text());
+    assertStrictEquals(cookieString, "foo=bar");
+    // try server2
+    cookieString = await wrappedFetch(serverTwoUrl + "/").then((r) => r.text());
+    assertStrictEquals(cookieString, "echo=one");
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
 });
