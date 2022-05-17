@@ -6,18 +6,21 @@ import { CookieJar } from "./cookie_jar.ts";
 import { wrapFetch } from "./fetch_wrapper.ts";
 import { delay } from "https://deno.land/std@0.85.0/async/delay.ts";
 
+const server1Port = 8001;
+const server2Port = 8002;
+
 let server1: Server | undefined;
-const serverOneUrl = "http://localhost:54933";
+const serverOneUrl = "http://localhost:" + server1Port;
 
 let server2: Server | undefined;
-const serverTwoUrl = "http://localhost:54934";
+const serverTwoUrl = "http://localhost:" + server2Port;
 
 let handlers: Promise<void | string>[];
 handlers = [];
 
 async function handleServer1() {
   await delay(100);
-  server1 = serve({ hostname: "localhost", port: 54933 });
+  server1 = serve({ hostname: "localhost", port: server1Port });
   for await (const request of server1) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";
@@ -34,7 +37,7 @@ async function handleServer1() {
 
 async function handleServer2() {
   await delay(100);
-  server2 = serve({ hostname: "localhost", port: 54934 });
+  server2 = serve({ hostname: "localhost", port: server2Port });
   for await (const request of server2) {
     if (request.url === "/") {
       const bodyContent = request.headers.get("cookie") || "";
@@ -51,8 +54,8 @@ async function handleServer2() {
 
 console.log(
   "Test HTTP webserver running at:",
-  "http://localhost:54933",
-  "http://localhost:54934",
+  "http://localhost:" + server1Port,
+  "http://localhost:" + server2Port,
 );
 console.log('GET "/" echos "cookie" header, GET "/set1" sets two cookies');
 
