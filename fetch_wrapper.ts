@@ -1,5 +1,4 @@
 import { CookieJar } from "./cookie_jar.ts";
-import { setHeader } from "./header_utils.ts";
 
 export type WrapFetchOptions = {
   /** your own fetch function. defaults to global fetch. This allows wrapping your fetch function multiple times. */
@@ -31,11 +30,10 @@ export function wrapFetch(options: WrapFetchOptions) {
       interceptedInit = {};
     }
 
-    if (!interceptedInit.headers) {
-      interceptedInit.headers = new Headers();
+    if (!(interceptedInit.headers instanceof Headers)) {
+      interceptedInit.headers = new Headers(interceptedInit.headers || {});
     }
-
-    setHeader(interceptedInit.headers, "cookie", cookieString);
+    interceptedInit.headers.set("cookie", cookieString);
 
     const response = await fetch(input, interceptedInit);
     response.headers.forEach((value, key) => {
