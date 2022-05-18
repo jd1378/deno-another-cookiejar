@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.1.2
+
+fix: use first arg as RequestInit when invoked as fetch(Request)
+
 ## v4.1.1
 
 - fix: Implement default path algorithm
