@@ -7,13 +7,15 @@ export type WrapFetchOptions = {
   cookieJar?: CookieJar;
 };
 
-export function wrapFetch(options: WrapFetchOptions) {
+type FetchParameters = Parameters<typeof fetch>;
+
+export function wrapFetch(options: WrapFetchOptions): typeof fetch {
   const { cookieJar = new CookieJar(), fetch = globalThis.fetch } = options ||
     {};
 
   async function wrappedFetch(
-    input: string | Request,
-    init?: RequestInit | undefined,
+    input: FetchParameters[0],
+    init?: FetchParameters[1],
   ) {
     // let fetch handle the error
     if (!input) {
