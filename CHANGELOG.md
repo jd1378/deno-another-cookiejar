@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.1.3
+
+fix: make wrapFetch return type match global fetch
+
 ## v4.1.2
 
 fix: use first arg as RequestInit when invoked as fetch(Request)
