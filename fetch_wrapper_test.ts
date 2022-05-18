@@ -1,4 +1,5 @@
 import {
+  assertArrayIncludes,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
 import { CookieJar } from "./cookie_jar.ts";
@@ -38,7 +39,10 @@ const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
 const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
 
 function serverHandler(request: Request): Response {
-  if (new URL(request.url).pathname === "/set1") {
+  if (new URL(request.url).pathname === "/echo_headers") {
+    const headers = JSON.stringify([...request.headers]);
+    return new Response(headers, { status: 200 });
+  } else if (new URL(request.url).pathname === "/set1") {
     const headers = new Headers();
     headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
     headers.append("Set-Cookie", "baz=thud; Path=/; Secure");
@@ -116,6 +120,21 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
     await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
     assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
     assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
+  } finally {
+    abortController.abort();
+  }
+});
+
+Deno.test("WrappedFetch uses the input as init if it's a Request object", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+    const request = new Request(serverOneUrl + "/echo_headers", {
+      headers: { foo: "bar" },
+    });
+    const res = await wrappedFetch(request).then((r) => r.json());
+    assertArrayIncludes(res, [["foo", "bar"]]);
   } finally {
     abortController.abort();
   }

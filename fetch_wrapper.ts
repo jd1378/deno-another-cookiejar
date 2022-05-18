@@ -21,7 +21,16 @@ export function wrapFetch(options: WrapFetchOptions) {
       return await fetch(input);
     }
     const cookieString = cookieJar.getCookieString(input);
-    const interceptedInit = init || {};
+
+    let interceptedInit: RequestInit;
+    if (init) {
+      interceptedInit = init;
+    } else if (input instanceof Request) {
+      interceptedInit = input;
+    } else {
+      interceptedInit = {};
+    }
+
     if (!interceptedInit.headers) {
       interceptedInit.headers = new Headers();
     }
