@@ -9,7 +9,7 @@ export type WrapFetchOptions = {
 
 type FetchParameters = Parameters<typeof fetch>;
 
-export function wrapFetch(options: WrapFetchOptions): typeof fetch {
+export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
   const { cookieJar = new CookieJar(), fetch = globalThis.fetch } = options ||
     {};
 

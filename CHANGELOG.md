@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.1.4
+
+fix: make wrapFetch options optional
+
 ## v4.1.3
 
 fix: make wrapFetch return type match global fetch
