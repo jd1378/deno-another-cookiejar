@@ -136,11 +136,11 @@ Deno.test("CookieJar.getCookie() (multiple cookie entries)", () => {
 
 Deno.test("CookieJar.getCookie() strictness check", () => {
   const cookieStr1 =
-    "foo=bar; path=/sth; domain=.example.com; Expires=21 Oct 2022";
+    "foo=bar; path=/sth; domain=.example.com; Expires=21 Oct 2088";
   const cookieStr2 =
     "foo=boo; path=/sth; domain=.example.com; Expires=21 Oct 2055";
   const cookieStr3 =
-    "foo=zed; path=/sth; domain=notexample.com; Expires=21 Oct 2022";
+    "foo=zed; path=/sth; domain=notexample.com; Expires=21 Oct 2088";
   const cookie1 = Cookie.from(cookieStr1);
   const cookie2 = Cookie.from(cookieStr2);
   const cookie3 = Cookie.from(cookieStr3);
@@ -199,7 +199,7 @@ Deno.test("CookieJar.getCookies() with expired cookies", () => {
   const cookieStr2 =
     "foo=bar; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT";
   const cookieStr3 =
-    "foo=bar; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2022 07:28:00 GMT";
+    "foo=bar; path=/sth; domain=.example.com; Expires=Wed, 21 Oct 2080 07:28:00 GMT";
   const cookie1 = Cookie.from(cookieStr1);
   const cookie2 = Cookie.from(cookieStr2);
   const cookie3 = Cookie.from(cookieStr3);
