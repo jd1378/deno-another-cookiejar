@@ -163,7 +163,7 @@ export class CookieJar {
   }
 
   /**
-   * returnes cookies that matches the options excluding expired ones, also removes expired cookies before returning.
+   * Returns cookies that match the options excluding expired ones, also removes expired cookies before returning.
    * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
    *  if no cookie is found with given options, an empty array is returned.
    */
@@ -191,6 +191,11 @@ export class CookieJar {
     }
   }
 
+  /**
+   * Converts the cookies to a string that can be used in a request.
+   * @param url - the url to get the cookies for. if provided, will only return cookies that match the domain and path of the url.
+   * @returns string of all cookies that match the url, in the from of `<cookie-name>=<cookie-value>` seperated by `; `
+   */
   getCookieString(url: string | Request | URL) {
     const searchCookie = new Cookie();
     searchCookie.setDomain(url);
