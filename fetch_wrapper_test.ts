@@ -52,6 +52,8 @@ function serverHandler(request: Request): Response {
     headers.append("Set-Cookie", "echo=one; Path=/; HttpOnly");
     headers.append("Set-Cookie", "third=echo; Path=/; Secure");
     return new Response("ok", { status: 200, headers });
+  } else if (new URL(request.url).pathname === "/redirect_to_server_two_set1") {
+    return Response.redirect(serverTwoUrl + "/set1");
   } else {
     const bodyContent = request.headers.get("cookie") || "";
     return new Response(bodyContent, { status: 200 });
@@ -196,6 +198,26 @@ Deno.test("WrappedFetch doesn't send secure cookies over unsecure urls", async (
     assertStrictEquals(cookieString, "foo=bar");
   } finally {
     abortController.abort();
+  }
+});
+
+Deno.test("Sets the correct domain in cookies when 302-redirected", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    await wrappedFetch(serverOneUrl + "/redirect_to_server_two_set1").then((
+      r,
+    ) => r.text());
+    assertStrictEquals(
+      cookieJar.getCookie({ name: "foo" })?.domain,
+      `${serverHostname}:${serverTwoPort}`,
+    );
+  } finally {
+    abortController.abort();
+    abortController2.abort();
   }
 });
 
