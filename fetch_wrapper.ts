@@ -40,7 +40,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     const response = await fetch(input, interceptedInit);
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() === "set-cookie") {
-        cookieJar.setCookie(value, input);
+        cookieJar.setCookie(value, response.url);
       }
     });
     return response;
