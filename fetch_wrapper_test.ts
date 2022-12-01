@@ -1,6 +1,5 @@
 import {
   assertArrayIncludes,
-  assertEquals,
   assertRejects,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
@@ -41,7 +40,7 @@ const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
 const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
 
 function serverHandler(request: Request): Response {
-  const pathname = new URL(request.url).pathname;
+  const { pathname } = new URL(request.url);
   if (pathname === "/echo_headers") {
     const headers = JSON.stringify([...request.headers]);
     return new Response(headers, { status: 200 });
@@ -128,7 +127,8 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
   try {
     const cookieJar = new CookieJar();
     const wrappedFetch = wrapFetch({ cookieJar });
-    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    const response = await wrappedFetch(serverOneUrl + "/set1");
+    await response.body?.cancel();
     assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
     assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
   } finally {
@@ -258,10 +258,8 @@ Deno.test("Gets cookies both from 302-redirected and 200 response", async () => 
 
 Deno.test("Respects when request.init.redirect is set to 'manual'", async () => {
   const abortController = runServer(serverOneOptions);
-  const abortController2 = runServer(serverTwoOptions);
   try {
-    const cookieJar = new CookieJar();
-    const wrappedFetch = wrapFetch({ cookieJar });
+    const wrappedFetch = wrapFetch();
 
     const pathname = "/redirect_to_server_two_set1";
     const response = await wrappedFetch(
@@ -271,10 +269,9 @@ Deno.test("Respects when request.init.redirect is set to 'manual'", async () => 
       },
     );
     await response.text();
-    assertEquals(response.url, serverOneUrl + pathname);
+    assertStrictEquals(response.url, serverOneUrl + pathname);
   } finally {
     abortController.abort();
-    abortController2.abort();
   }
 });
 
