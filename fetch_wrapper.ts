@@ -9,6 +9,12 @@ export type WrapFetchOptions = {
 
 type FetchParameters = Parameters<typeof fetch>;
 
+const redirectStatus = new Set([301, 302, 303, 307, 308]);
+
+function isRedirect(status: number): boolean {
+  return redirectStatus.has(status);
+}
+
 export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
   const { cookieJar = new CookieJar(), fetch = globalThis.fetch } = options ||
     {};
@@ -16,7 +22,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
   async function wrappedFetch(
     input: FetchParameters[0],
     init?: FetchParameters[1],
-  ) {
+  ): Promise<Response> {
     // let fetch handle the error
     if (!input) {
       return await fetch(input);
@@ -37,13 +43,24 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     }
     interceptedInit.headers.set("cookie", cookieString);
 
-    const response = await fetch(input, interceptedInit);
+    const response = await fetch(input, {
+      ...interceptedInit,
+      redirect: "manual",
+    });
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() === "set-cookie") {
         cookieJar.setCookie(value, response.url);
       }
     });
-    return response;
+    if (!isRedirect(response.status)) {
+      return response;
+    }
+
+    const redirectUrl = response.headers.get("location");
+    if (!redirectUrl) return response;
+    response.body?.cancel();
+
+    return await wrappedFetch(redirectUrl, init);
   }
 
   return wrappedFetch;

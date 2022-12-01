@@ -39,21 +39,28 @@ const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
 const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
 
 function serverHandler(request: Request): Response {
-  if (new URL(request.url).pathname === "/echo_headers") {
+  const pathname = new URL(request.url).pathname;
+  if (pathname === "/echo_headers") {
     const headers = JSON.stringify([...request.headers]);
     return new Response(headers, { status: 200 });
-  } else if (new URL(request.url).pathname === "/set1") {
+  } else if (pathname === "/set1") {
     const headers = new Headers();
     headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
     headers.append("Set-Cookie", "baz=thud; Path=/; Secure");
     return new Response("ok", { status: 200, headers });
-  } else if (new URL(request.url).pathname === "/set2") {
+  } else if (pathname === "/set2") {
     const headers = new Headers();
     headers.append("Set-Cookie", "echo=one; Path=/; HttpOnly");
     headers.append("Set-Cookie", "third=echo; Path=/; Secure");
     return new Response("ok", { status: 200, headers });
-  } else if (new URL(request.url).pathname === "/redirect_to_server_two_set1") {
+  } else if (pathname === "/redirect_to_server_two_set1") {
     return Response.redirect(serverTwoUrl + "/set1");
+  } else if (pathname === "/redirect_with_cookie") {
+    const headers = new Headers({
+      "Set-Cookie": "redirect_cookie=bar; Path=/; HttpOnly",
+      "location": serverTwoUrl + "/set1",
+    });
+    return new Response(null, { status: 302, headers });
   } else {
     const bodyContent = request.headers.get("cookie") || "";
     return new Response(bodyContent, { status: 200 });
@@ -214,6 +221,30 @@ Deno.test("Sets the correct domain in cookies when 302-redirected", async () => 
     assertStrictEquals(
       cookieJar.getCookie({ name: "foo" })?.domain,
       `${serverHostname}:${serverTwoPort}`,
+    );
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("Gets cookies both from 302-redirected response and 200 response", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    await wrappedFetch(serverOneUrl + "/redirect_with_cookie").then((
+      r,
+    ) => r.text());
+    assertStrictEquals(
+      cookieJar.getCookie({ name: "foo" })?.domain,
+      `${serverHostname}:${serverTwoPort}`,
+    );
+    assertStrictEquals(
+      cookieJar.getCookie({ name: "redirect_cookie" })?.domain,
+      `${serverHostname}:${serverOnePort}`,
     );
   } finally {
     abortController.abort();
