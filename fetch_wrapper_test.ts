@@ -1,5 +1,7 @@
 import {
   assertArrayIncludes,
+  assertEquals,
+  assertRejects,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
 import { CookieJar } from "./cookie_jar.ts";
@@ -55,7 +57,7 @@ function serverHandler(request: Request): Response {
     return new Response("ok", { status: 200, headers });
   } else if (pathname === "/redirect_to_server_two_set1") {
     return Response.redirect(serverTwoUrl + "/set1");
-  } else if (pathname === "/redirect_with_cookie") {
+  } else if (pathname === "/redirect_to_server_two_set1_with_cookie") {
     const headers = new Headers({
       "Set-Cookie": "redirect_cookie=bar; Path=/; HttpOnly",
       "location": serverTwoUrl + "/set1",
@@ -228,14 +230,16 @@ Deno.test("Sets the correct domain in cookies when 302-redirected", async () => 
   }
 });
 
-Deno.test("Gets cookies both from 302-redirected response and 200 response", async () => {
+Deno.test("Gets cookies both from 302-redirected and 200 response", async () => {
   const abortController = runServer(serverOneOptions);
   const abortController2 = runServer(serverTwoOptions);
   try {
     const cookieJar = new CookieJar();
     const wrappedFetch = wrapFetch({ cookieJar });
 
-    await wrappedFetch(serverOneUrl + "/redirect_with_cookie").then((
+    await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_set1_with_cookie",
+    ).then((
       r,
     ) => r.text());
     assertStrictEquals(
@@ -249,6 +253,51 @@ Deno.test("Gets cookies both from 302-redirected response and 200 response", asy
   } finally {
     abortController.abort();
     abortController2.abort();
+  }
+});
+
+Deno.test("Respects when request.init.redirect is set to 'manual'", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const pathname = "/redirect_to_server_two_set1";
+    const response = await wrappedFetch(
+      serverOneUrl + pathname,
+      {
+        redirect: "manual",
+      },
+    );
+    await response.text();
+    assertEquals(response.url, serverOneUrl + pathname);
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("Respects when request.init.redirect is set to 'error'", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const pathname = "/redirect_to_server_two_set1";
+
+    const fn = async () => {
+      await wrappedFetch(serverOneUrl + pathname, {
+        redirect: "error",
+      });
+    };
+
+    await assertRejects(
+      async () => await fn(),
+      Error,
+      `URI requested responded with a redirect and redirect mode is set to error: ${serverOneUrl}${pathname}`,
+    );
+  } finally {
+    abortController.abort();
   }
 });
 
