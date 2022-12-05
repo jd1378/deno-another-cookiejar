@@ -1,5 +1,8 @@
 import { CookieJar } from "./cookie_jar.ts";
 
+// Max 20 redirects is fetch default setting
+const MAX_REDIRECT = 20;
+
 export type WrapFetchOptions = {
   /** your own fetch function. defaults to global fetch. This allows wrapping your fetch function multiple times. */
   fetch?: typeof fetch;
@@ -7,9 +10,25 @@ export type WrapFetchOptions = {
   cookieJar?: CookieJar;
 };
 
-interface WrappedFetchRequestInit extends RequestInit {
-  maxRedirect?: number;
+interface InternalRequestInit extends RequestInit {
   redirectCount?: number;
+}
+
+function toInternalRequestInit(req: Request): InternalRequestInit {
+  return {
+    body: req.body,
+    cache: req.cache,
+    credentials: req.credentials,
+    headers: req.headers,
+    integrity: req.integrity,
+    keepalive: req.keepalive,
+    method: req.method,
+    mode: req.mode,
+    redirect: "manual",
+    referrer: req.referrer,
+    referrerPolicy: req.referrerPolicy,
+    signal: req.signal,
+  };
 }
 
 const redirectStatus = new Set([301, 302, 303, 307, 308]);
@@ -23,8 +42,8 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     {};
 
   async function wrappedFetch(
-    input: Request | URL | string,
-    init?: WrappedFetchRequestInit,
+    input: RequestInfo | URL,
+    init?: InternalRequestInit,
   ): Promise<Response> {
     // let fetch handle the error
     if (!input) {
@@ -32,24 +51,24 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     }
     const cookieString = cookieJar.getCookieString(input);
 
-    let interceptedInit: RequestInit;
-    if (init) {
-      interceptedInit = init;
-    } else if (input instanceof Request) {
-      interceptedInit = input;
+    let originalUrl, originalRedirect, internalInit;
+
+    if (input instanceof Request) {
+      originalUrl = input.url;
+      originalRedirect = input.redirect;
+      internalInit = toInternalRequestInit(input);
     } else {
-      interceptedInit = {};
+      originalUrl = input;
+      originalRedirect = init?.redirect;
+      internalInit = { ...init, redirect: "manual" };
     }
 
-    if (!(interceptedInit.headers instanceof Headers)) {
-      interceptedInit.headers = new Headers(interceptedInit.headers || {});
+    if (!(internalInit.headers instanceof Headers)) {
+      internalInit.headers = new Headers(internalInit.headers || {});
     }
-    interceptedInit.headers.set("cookie", cookieString);
+    internalInit.headers.set("cookie", cookieString);
 
-    const response = await fetch(input, {
-      ...interceptedInit,
-      redirect: "manual",
-    });
+    const response = await fetch(originalUrl, internalInit as RequestInit);
 
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() === "set-cookie") {
@@ -57,27 +76,29 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
       }
     });
 
-    const redirectCount = init?.redirectCount ?? 0;
-    const maxRedirect = init?.maxRedirect ?? 20;
+    const redirectCount = internalInit.redirectCount ?? 0;
 
-    if (redirectCount >= maxRedirect) {
-      await response.body?.cancel();
-      throw new TypeError(
-        `Reached maximum redirect of ${maxRedirect} for URL: ${response.url}`,
-      );
+    // If it's the first request, handle if request.redirect is set to 'manual' or 'error'
+    if (redirectCount === 0) {
+      if (originalRedirect === "manual") {
+        return response;
+      } else if (originalRedirect === "error") {
+        await response.body?.cancel();
+        throw new TypeError(
+          `URI requested responded with a redirect and redirect mode is set to error: ${response.url}`,
+        );
+      }
     }
 
-    init = {
-      ...init,
-      redirectCount: redirectCount + 1,
-    };
+    // Do this check here to allow tail recursion of redirect.
+    if (redirectCount > 0) {
+      Object.defineProperty(response, "redirected", { value: true });
+    }
 
-    if (init.redirect === "manual") {
-      return response;
-    } else if (init.redirect === "error") {
+    if (redirectCount >= MAX_REDIRECT) {
       await response.body?.cancel();
       throw new TypeError(
-        `URI requested responded with a redirect and redirect mode is set to error: ${response.url}`,
+        `Reached maximum redirect of ${MAX_REDIRECT} for URL: ${response.url}`,
       );
     }
 
@@ -92,7 +113,9 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
 
     await response.body?.cancel();
 
-    return await wrappedFetch(redirectUrl, init);
+    internalInit.redirectCount = redirectCount + 1;
+
+    return await wrappedFetch(redirectUrl, internalInit as RequestInit);
   }
 
   return wrappedFetch;

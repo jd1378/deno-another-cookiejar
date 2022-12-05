@@ -61,6 +61,16 @@ function serverHandler(request: Request): Response {
       "Set-Cookie": "redirect_cookie=bar; Path=/; HttpOnly",
       "location": serverTwoUrl + "/set1",
     });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_loop") {
+    const headers = new Headers({
+      "location": serverOneUrl + "/redirect_loop_2",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_loop_2") {
+    const headers = new Headers({
+      "location": serverOneUrl + "/redirect_loop",
+    });
     return new Response(null, { status: 302, headers });
   } else {
     const bodyContent = request.headers.get("cookie") || "";
@@ -210,6 +220,23 @@ Deno.test("WrappedFetch doesn't send secure cookies over unsecure urls", async (
   }
 });
 
+Deno.test("response.redirected is set when redirected", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const response = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_set1",
+    );
+    await response.body?.cancel();
+    assertStrictEquals(response.redirected, true);
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
 Deno.test("Sets the correct domain in cookies when 302-redirected", async () => {
   const abortController = runServer(serverOneOptions);
   const abortController2 = runServer(serverTwoOptions);
@@ -253,6 +280,24 @@ Deno.test("Gets cookies both from 302-redirected and 200 response", async () => 
   } finally {
     abortController.abort();
     abortController2.abort();
+  }
+});
+
+Deno.test("Redirect loop ends when it reaches 20 redirects", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+    const pathname = "/redirect_loop";
+
+    await assertRejects(
+      async () => {
+        await wrappedFetch(serverOneUrl + pathname);
+      },
+      Error,
+      `Reached maximum redirect of 20 for URL: ${serverOneUrl}`,
+    );
+  } finally {
+    abortController.abort();
   }
 });
 
