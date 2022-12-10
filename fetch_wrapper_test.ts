@@ -1,5 +1,6 @@
 import {
   assertArrayIncludes,
+  assertEquals,
   assertRejects,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
@@ -39,11 +40,17 @@ const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
 
 const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
 
-function serverHandler(request: Request): Response {
+async function serverHandler(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
   if (pathname === "/echo_headers") {
     const headers = JSON.stringify([...request.headers]);
     return new Response(headers, { status: 200 });
+  } else if (pathname === "/echo_body") {
+    const body = await request.text();
+    return new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } else if (pathname === "/set1") {
     const headers = new Headers();
     headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
@@ -161,6 +168,25 @@ Deno.test("WrappedFetch uses the input as init if it's a Request object", async 
   }
 });
 
+Deno.test("WrappedFetch body is not tampered with", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+    const bodyData = { foo: "bar" };
+    const request = new Request(serverOneUrl + "/echo_body", {
+      body: JSON.stringify(bodyData),
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const res = await wrappedFetch(request).then((r) => r.json());
+    assertEquals(res, bodyData);
+  } finally {
+    abortController.abort();
+  }
+});
+
 Deno.test("WrappedFetch merges headers with cookie header", async () => {
   const abortController = runServer(serverOneOptions);
   try {
@@ -234,6 +260,21 @@ Deno.test("response.redirected is set when redirected", async () => {
   } finally {
     abortController.abort();
     abortController2.abort();
+  }
+});
+
+Deno.test("response.redirected is not set when not redirected", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const response = await wrappedFetch(
+      serverOneUrl + "/echo_headers",
+    );
+    await response.body?.cancel();
+    assertStrictEquals(response.redirected, false);
+  } finally {
+    abortController.abort();
   }
 });
 

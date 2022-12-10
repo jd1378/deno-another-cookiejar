@@ -77,38 +77,37 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     });
 
     const redirectCount = internalInit.redirectCount ?? 0;
-
-    // If it's the first request, handle if request.redirect is set to 'manual' or 'error'
-    if (redirectCount === 0) {
-      if (originalRedirect === "manual") {
-        return response;
-      } else if (originalRedirect === "error") {
-        await response.body?.cancel();
-        throw new TypeError(
-          `URI requested responded with a redirect and redirect mode is set to error: ${response.url}`,
-        );
-      }
-    }
+    const redirectUrl = response.headers.get("location");
 
     // Do this check here to allow tail recursion of redirect.
     if (redirectCount > 0) {
       Object.defineProperty(response, "redirected", { value: true });
     }
 
+    if (
+      // Return if response is not redirect
+      !isRedirect(response.status) ||
+      //  or location is not set
+      !redirectUrl ||
+      // or if it's the first request and request.redirect is set to 'manual'
+      (redirectCount === 0 && originalRedirect === "manual")
+    ) {
+      return response;
+    }
+
+    if (originalRedirect === "error") {
+      await response.body?.cancel();
+      throw new TypeError(
+        `URI requested responded with a redirect and redirect mode is set to error: ${response.url}`,
+      );
+    }
+
+    // If maximum redirects are reached throw error
     if (redirectCount >= MAX_REDIRECT) {
       await response.body?.cancel();
       throw new TypeError(
         `Reached maximum redirect of ${MAX_REDIRECT} for URL: ${response.url}`,
       );
-    }
-
-    if (!isRedirect(response.status)) {
-      return response;
-    }
-
-    const redirectUrl = response.headers.get("location");
-    if (!redirectUrl) {
-      return response;
     }
 
     await response.body?.cancel();
