@@ -22,8 +22,8 @@ function isRedirect(status: number): boolean {
 
 // Credit <https://github.com/node-fetch/node-fetch/blob/5e78af3ba7555fa1e466e804b2e51c5b687ac1a2/src/utils/is.js#L68>.
 function isDomainOrSubdomain(destination: string, original: string): boolean {
-  const orig = new URL(original).host;
-  const dest = new URL(destination).host;
+  const orig = new URL(original).hostname;
+  const dest = new URL(destination).hostname;
 
   return orig === dest || orig.endsWith(`.${dest}`);
 }

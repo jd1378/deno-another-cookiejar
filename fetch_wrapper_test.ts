@@ -27,21 +27,22 @@ function drop(resourceName: string) {
 
 const serverOnePort = 53250;
 const serverTwoPort = 53251;
-const serverHostname = "127.0.0.1";
+const serverOneHostname = "127.0.0.1";
+const serverTwoHostname = "localhost";
 
 const serverOneOptions = {
-  hostname: serverHostname,
+  hostname: serverOneHostname,
   port: serverOnePort,
 };
 
 const serverTwoOptions = {
-  hostname: serverHostname,
+  hostname: serverTwoHostname,
   port: serverTwoPort,
 };
 
-const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
+const serverOneUrl = `http://${serverOneHostname}:${serverOnePort}`;
 
-const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
+const serverTwoUrl = `http://${serverTwoHostname}:${serverTwoPort}`;
 
 async function serverHandler(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
@@ -316,7 +317,7 @@ Deno.test("Sets the correct domain in cookies when 302-redirected", async () => 
     ) => r.text());
     assertStrictEquals(
       cookieJar.getCookie({ name: "foo" })?.domain,
-      `${serverHostname}:${serverTwoPort}`,
+      `${serverTwoHostname}`,
     );
   } finally {
     abortController.abort();
@@ -338,11 +339,11 @@ Deno.test("Gets cookies both from 302-redirected and 200 response", async () => 
     ) => r.text());
     assertStrictEquals(
       cookieJar.getCookie({ name: "foo" })?.domain,
-      `${serverHostname}:${serverTwoPort}`,
+      `${serverTwoHostname}`,
     );
     assertStrictEquals(
       cookieJar.getCookie({ name: "redirect_cookie" })?.domain,
-      `${serverHostname}:${serverOnePort}`,
+      `${serverOneHostname}`,
     );
   } finally {
     abortController.abort();
