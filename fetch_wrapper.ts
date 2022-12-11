@@ -126,9 +126,11 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
       }
     }
 
-    filteredHeaders.delete("content-length");
-    interceptedInit.method = "GET";
-    interceptedInit.body = undefined;
+    if (interceptedInit.method === "POST") {
+      filteredHeaders.delete("content-length");
+      interceptedInit.method = "GET";
+      interceptedInit.body = undefined;
+    }
     interceptedInit.headers = filteredHeaders;
 
     return await wrappedFetch(redirectUrl, interceptedInit as RequestInit);
