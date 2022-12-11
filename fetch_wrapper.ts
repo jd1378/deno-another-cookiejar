@@ -20,6 +20,14 @@ function isRedirect(status: number): boolean {
   return redirectStatus.has(status);
 }
 
+// Credit <https://github.com/node-fetch/node-fetch/blob/5e78af3ba7555fa1e466e804b2e51c5b687ac1a2/src/utils/is.js#L68>.
+function isDomainOrSubdomain(destination: string, original: string): boolean {
+  const orig = new URL(original).host;
+  const dest = new URL(destination).host;
+
+  return orig === dest || orig.endsWith(`.${dest}`);
+}
+
 export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
   const { cookieJar = new CookieJar(), fetch = globalThis.fetch } = options ||
     {};
@@ -35,6 +43,8 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     const cookieString = cookieJar.getCookieString(input);
 
     let originalRedirectOption: ExtendedRequestInit["redirect"];
+    const originalRequestUrl: string = (input as Request).url ||
+      input.toString();
 
     if (input instanceof Request) {
       originalRedirectOption = input.redirect;
@@ -57,6 +67,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     }
 
     reqHeaders.set("cookie", cookieString);
+    reqHeaders.delete("cookie2"); // Remove cookie2 if it exists, It's deprecated
 
     interceptedInit.headers = reqHeaders;
 
@@ -105,6 +116,19 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     await response.body?.cancel();
 
     interceptedInit.redirectCount = redirectCount + 1;
+
+    const filteredHeaders = new Headers(interceptedInit.headers);
+
+    // Do not forward sensitive headers to third-party domains.
+    if (!isDomainOrSubdomain(originalRequestUrl, redirectUrl)) {
+      for (
+        const name of ["authorization", "www-authenticate"] // cookie headers are handled differently
+      ) {
+        filteredHeaders.delete(name);
+      }
+    }
+
+    interceptedInit.headers = filteredHeaders;
 
     return await wrappedFetch(redirectUrl, interceptedInit as RequestInit);
   }

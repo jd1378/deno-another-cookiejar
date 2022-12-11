@@ -521,12 +521,12 @@ Deno.test("doesn't send sensitive headers after redirect to different domains", 
       "request had `authorization` in headers",
     );
     assertFalse(
-      resHeaders.has("cookie"),
-      "request had `cookie` in headers",
+      resHeaders.get("cookie"),
+      "`cookie` header is not empty",
     );
     assertFalse(
       resHeaders.has("cookie2"),
-      "request had `cookie2` in headers",
+      "`cookie2` header shouldn't be sent! ",
     );
   } finally {
     abortController.abort();
