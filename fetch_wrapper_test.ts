@@ -167,12 +167,15 @@ Deno.test("WrappedFetch can use the Request and still inject cookies", async () 
     ]);
     const wrappedFetch = wrapFetch({ cookieJar });
     const request = new Request(serverOneUrl + "/echo_headers", {
-      headers: { foo: "bar" },
+      headers: { foo: "bar", zoo: "bum" },
     });
-    const res = await wrappedFetch(request, { headers: [["thud", "fum"]] })
+    const res = await wrappedFetch(request, {
+      headers: [["thud", "fum"], ["zoo", "gut"]],
+    })
       .then((r) => r.json());
     assertArrayIncludes(res, [
       ["foo", "bar"],
+      ["zoo", "gut"], // not 'bum' because init should replace original request options
       ["thud", "fum"],
       [
         "cookie",
