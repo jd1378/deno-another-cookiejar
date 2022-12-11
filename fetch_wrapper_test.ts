@@ -1,10 +1,15 @@
 import {
+  assert,
   assertArrayIncludes,
+  assertEquals,
+  assertFalse,
+  assertRejects,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
 import { CookieJar } from "./cookie_jar.ts";
 import { wrapFetch } from "./fetch_wrapper.ts";
 import { delay } from "https://deno.land/std@0.139.0/async/delay.ts";
+import { Cookie } from "./cookie.ts";
 
 function drop(resourceName: string) {
   const rt: Deno.ResourceMap = Deno.resources();
@@ -22,38 +27,67 @@ function drop(resourceName: string) {
 
 const serverOnePort = 53250;
 const serverTwoPort = 53251;
-const serverHostname = "127.0.0.1";
+const serverOneHostname = "127.0.0.1";
+const serverTwoHostname = "localhost";
 
 const serverOneOptions = {
-  hostname: serverHostname,
+  hostname: serverOneHostname,
   port: serverOnePort,
 };
 
 const serverTwoOptions = {
-  hostname: serverHostname,
+  hostname: serverTwoHostname,
   port: serverTwoPort,
 };
 
-const serverOneUrl = `http://${serverHostname}:${serverOnePort}`;
+const serverOneUrl = `http://${serverOneHostname}:${serverOnePort}`;
 
-const serverTwoUrl = `http://${serverHostname}:${serverTwoPort}`;
+const serverTwoUrl = `http://${serverTwoHostname}:${serverTwoPort}`;
 
-function serverHandler(request: Request): Response {
-  if (new URL(request.url).pathname === "/echo_headers") {
+async function serverHandler(request: Request): Promise<Response> {
+  const { pathname } = new URL(request.url);
+  if (pathname === "/echo_headers") {
     const headers = JSON.stringify([...request.headers]);
     return new Response(headers, { status: 200 });
-  } else if (new URL(request.url).pathname === "/set1") {
+  } else if (pathname === "/echo_body") {
+    const body = await request.text();
+    return new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } else if (pathname === "/set1") {
     const headers = new Headers();
     headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
     headers.append("Set-Cookie", "baz=thud; Path=/; Secure");
     return new Response("ok", { status: 200, headers });
-  } else if (new URL(request.url).pathname === "/set2") {
+  } else if (pathname === "/set2") {
     const headers = new Headers();
     headers.append("Set-Cookie", "echo=one; Path=/; HttpOnly");
     headers.append("Set-Cookie", "third=echo; Path=/; Secure");
     return new Response("ok", { status: 200, headers });
-  } else if (new URL(request.url).pathname === "/redirect_to_server_two_set1") {
+  } else if (pathname === "/redirect_to_server_two_set1") {
     return Response.redirect(serverTwoUrl + "/set1");
+  } else if (pathname === "/redirect_to_server_two_set1_with_cookie") {
+    const headers = new Headers({
+      "Set-Cookie": "redirect_cookie=bar; Path=/; HttpOnly",
+      "location": serverTwoUrl + "/set1",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_to_server_two") {
+    const headers = new Headers({
+      "location": serverTwoUrl + "/echo_headers",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_loop") {
+    const headers = new Headers({
+      "location": serverOneUrl + "/redirect_loop_2",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_loop_2") {
+    const headers = new Headers({
+      "location": serverOneUrl + "/redirect_loop",
+    });
+    return new Response(null, { status: 302, headers });
   } else {
     const bodyContent = request.headers.get("cookie") || "";
     return new Response(bodyContent, { status: 200 });
@@ -119,7 +153,8 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
   try {
     const cookieJar = new CookieJar();
     const wrappedFetch = wrapFetch({ cookieJar });
-    await wrappedFetch(serverOneUrl + "/set1").then((r) => r.text());
+    const response = await wrappedFetch(serverOneUrl + "/set1");
+    await response.body?.cancel();
     assertStrictEquals(cookieJar.getCookie({ name: "foo" })?.value, "bar");
     assertStrictEquals(cookieJar.getCookie({ name: "baz" })?.value, "thud");
   } finally {
@@ -127,16 +162,53 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
   }
 });
 
-Deno.test("WrappedFetch uses the input as init if it's a Request object", async () => {
+Deno.test("WrappedFetch can use the Request and still inject cookies", async () => {
   const abortController = runServer(serverOneOptions);
   try {
-    const cookieJar = new CookieJar();
+    const cookieJar = new CookieJar([
+      new Cookie({
+        name: "goo",
+        value: "baz",
+        expires: new Date("2600 10 10").valueOf(),
+        domain: new URL(serverOneUrl).hostname,
+      }),
+    ]);
     const wrappedFetch = wrapFetch({ cookieJar });
     const request = new Request(serverOneUrl + "/echo_headers", {
-      headers: { foo: "bar" },
+      headers: { foo: "bar", zoo: "bum" },
+    });
+    const res = await wrappedFetch(request, {
+      headers: [["thud", "fum"], ["zoo", "gut"]],
+    })
+      .then((r) => r.json());
+    assertArrayIncludes(res, [
+      ["foo", "bar"],
+      ["zoo", "gut"], // not 'bum' because init should replace original request options
+      ["thud", "fum"],
+      [
+        "cookie",
+        "goo=baz",
+      ],
+    ]);
+  } finally {
+    abortController.abort();
+  }
+});
+
+Deno.test("WrappedFetch body is not tampered with", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+    const bodyData = { foo: "bar" };
+    const request = new Request(serverOneUrl + "/echo_body", {
+      body: JSON.stringify(bodyData),
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
     const res = await wrappedFetch(request).then((r) => r.json());
-    assertArrayIncludes(res, [["foo", "bar"]]);
+    assertEquals(res, bodyData);
   } finally {
     abortController.abort();
   }
@@ -201,6 +273,38 @@ Deno.test("WrappedFetch doesn't send secure cookies over unsecure urls", async (
   }
 });
 
+Deno.test("response.redirected is set when redirected", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const response = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_set1",
+    );
+    await response.body?.cancel();
+    assertStrictEquals(response.redirected, true);
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("response.redirected is not set when not redirected", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const response = await wrappedFetch(
+      serverOneUrl + "/echo_headers",
+    );
+    await response.body?.cancel();
+    assertStrictEquals(response.redirected, false);
+  } finally {
+    abortController.abort();
+  }
+});
+
 Deno.test("Sets the correct domain in cookies when 302-redirected", async () => {
   const abortController = runServer(serverOneOptions);
   const abortController2 = runServer(serverTwoOptions);
@@ -213,11 +317,97 @@ Deno.test("Sets the correct domain in cookies when 302-redirected", async () => 
     ) => r.text());
     assertStrictEquals(
       cookieJar.getCookie({ name: "foo" })?.domain,
-      `${serverHostname}:${serverTwoPort}`,
+      `${serverTwoHostname}`,
     );
   } finally {
     abortController.abort();
     abortController2.abort();
+  }
+});
+
+Deno.test("Gets cookies both from 302-redirected and 200 response", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_set1_with_cookie",
+    ).then((
+      r,
+    ) => r.text());
+    assertStrictEquals(
+      cookieJar.getCookie({ name: "foo" })?.domain,
+      `${serverTwoHostname}`,
+    );
+    assertStrictEquals(
+      cookieJar.getCookie({ name: "redirect_cookie" })?.domain,
+      `${serverOneHostname}`,
+    );
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("Redirect loop ends when it reaches 20 redirects", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+    const pathname = "/redirect_loop";
+
+    await assertRejects(
+      async () => {
+        await wrappedFetch(serverOneUrl + pathname);
+      },
+      Error,
+      `Reached maximum redirect of 20 for URL: ${serverOneUrl}`,
+    );
+  } finally {
+    abortController.abort();
+  }
+});
+
+Deno.test("Respects when request.init.redirect is set to 'manual'", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const pathname = "/redirect_to_server_two_set1";
+    const response = await wrappedFetch(
+      serverOneUrl + pathname,
+      {
+        redirect: "manual",
+      },
+    );
+    await response.text();
+    assertStrictEquals(response.url, serverOneUrl + pathname);
+  } finally {
+    abortController.abort();
+  }
+});
+
+Deno.test("Respects when request.init.redirect is set to 'error'", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const pathname = "/redirect_to_server_two_set1";
+
+    const fn = async () => {
+      await wrappedFetch(serverOneUrl + pathname, {
+        redirect: "error",
+      });
+    };
+
+    await assertRejects(
+      async () => await fn(),
+      Error,
+      `URI requested responded with a redirect and redirect mode is set to error: ${serverOneUrl}${pathname}`,
+    );
+  } finally {
+    abortController.abort();
   }
 });
 
@@ -246,6 +436,99 @@ Deno.test("Cookies are not send cross domain", async () => {
     // try server2
     cookieString = await wrappedFetch(serverTwoUrl + "/").then((r) => r.text());
     assertStrictEquals(cookieString, "echo=one");
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("using wrapped fetch doesn't mutate user's initial init", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const abortController = new AbortController();
+    const originalUserInit: RequestInit = {
+      body: "foo",
+      cache: "reload",
+      credentials: "omit",
+      headers: [["a", "b"]],
+      integrity: "c",
+      keepalive: false,
+      method: "POST",
+      mode: "no-cors",
+      redirect: "follow",
+      referrer: "unknwn",
+      referrerPolicy: "unsafe-url",
+      signal: abortController.signal,
+      window: null,
+    };
+
+    const userInit: RequestInit = {
+      body: "foo",
+      cache: "reload",
+      credentials: "omit",
+      headers: [["a", "b"]],
+      integrity: "c",
+      keepalive: false,
+      method: "POST",
+      mode: "no-cors",
+      redirect: "follow",
+      referrer: "unknwn",
+      referrerPolicy: "unsafe-url",
+      signal: abortController.signal,
+      window: null,
+    };
+
+    const response = await wrappedFetch(serverOneUrl + "/set1", userInit);
+    await response.body?.cancel();
+
+    assertEquals(originalUserInit, userInit);
+  } finally {
+    abortController.abort();
+  }
+});
+
+Deno.test("doesn't send sensitive headers after redirect to different domains", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const res = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two",
+      {
+        headers: {
+          "foo": "bar",
+          "authorization": "foo",
+          "www-authenticate": "foo",
+          "cookie": "foo",
+          "cookie2": "foo",
+        },
+      },
+    ).then((r) => r.json());
+
+    const resHeaders = new Headers(res);
+    assert(resHeaders.has("foo"), "request didn't have `foo` in headers");
+    // should not contain the headers above
+    assertFalse(
+      resHeaders.has("www-authenticate"),
+      "request had `www-authenticate` in headers",
+    );
+    assertFalse(
+      resHeaders.has("authorization"),
+      "request had `authorization` in headers",
+    );
+    assertFalse(
+      resHeaders.get("cookie"),
+      "`cookie` header is not empty",
+    );
+    assertFalse(
+      resHeaders.has("cookie2"),
+      "`cookie2` header shouldn't be sent! ",
+    );
   } finally {
     abortController.abort();
     abortController2.abort();

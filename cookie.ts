@@ -260,7 +260,7 @@ export class Cookie {
 
         case "domain":
           if (attrValue) {
-            const domain = parseURL(attrValue).host;
+            const domain = parseURL(attrValue).hostname;
             if (domain) {
               options.domain = domain;
             }
@@ -356,8 +356,10 @@ export class Cookie {
     }
 
     if (this.domain) {
-      const host = urlObj.host; // 'host' includes port number, if specified
-      if (isSameDomainOrSubdomain(this.domain, host)) {
+      // according to rfc 6265 8.5.  Weak Confidentiality,
+      // port should not matter, hence the usage of 'hostname' over 'host'
+      const hostname = urlObj.hostname; // 'host' includes port number, if specified, hostname does not
+      if (isSameDomainOrSubdomain(this.domain, hostname)) {
         return true;
       }
     }
@@ -370,7 +372,7 @@ export class Cookie {
   }
 
   setDomain(url: string | Request | URL) {
-    this.domain = parseURL(url).host;
+    this.domain = parseURL(url).hostname;
   }
 
   setPath(url: string | Request | URL) {

@@ -29,5 +29,5 @@ jobs:
     - name: Check runtime issues
       run: deno run --reload mod.ts
     - name: Run tests
-      run: deno test --allow-net=127.0.0.1
+      run: deno test --allow-net=127.0.0.1,localhost
   
