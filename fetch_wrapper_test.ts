@@ -7,6 +7,7 @@ import {
 import { CookieJar } from "./cookie_jar.ts";
 import { wrapFetch } from "./fetch_wrapper.ts";
 import { delay } from "https://deno.land/std@0.139.0/async/delay.ts";
+import { Cookie } from "./cookie.ts";
 
 function drop(resourceName: string) {
   const rt: Deno.ResourceMap = Deno.resources();
@@ -153,16 +154,23 @@ Deno.test("WrappedFetch saves cookies from set-cookie header", async () => {
   }
 });
 
-Deno.test("WrappedFetch uses the input as init if it's a Request object", async () => {
+Deno.test("WrappedFetch can use the Request and still inject cookies", async () => {
   const abortController = runServer(serverOneOptions);
   try {
-    const cookieJar = new CookieJar();
+    const cookieJar = new CookieJar([
+      new Cookie({
+        name: "goo",
+        value: "baz",
+        expires: new Date("2600 10 10").valueOf(),
+        domain: new URL(serverOneUrl).hostname,
+      }),
+    ]);
     const wrappedFetch = wrapFetch({ cookieJar });
     const request = new Request(serverOneUrl + "/echo_headers", {
       headers: { foo: "bar" },
     });
     const res = await wrappedFetch(request).then((r) => r.json());
-    assertArrayIncludes(res, [["foo", "bar"]]);
+    assertArrayIncludes(res, [["foo", "bar"], ["cookie", "goo=baz"]]);
   } finally {
     abortController.abort();
   }
@@ -412,5 +420,53 @@ Deno.test("Cookies are not send cross domain", async () => {
   } finally {
     abortController.abort();
     abortController2.abort();
+  }
+});
+
+Deno.test("using wrapped fetch doesn't mutate user's initial init", async () => {
+  const abortController = runServer(serverOneOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const abortController = new AbortController();
+    const originalUserInit: RequestInit = {
+      body: "foo",
+      cache: "reload",
+      credentials: "omit",
+      headers: [["a", "b"]],
+      integrity: "c",
+      keepalive: false,
+      method: "POST",
+      mode: "no-cors",
+      redirect: "follow",
+      referrer: "unknwn",
+      referrerPolicy: "unsafe-url",
+      signal: abortController.signal,
+      window: null,
+    };
+
+    const userInit: RequestInit = {
+      body: "foo",
+      cache: "reload",
+      credentials: "omit",
+      headers: [["a", "b"]],
+      integrity: "c",
+      keepalive: false,
+      method: "POST",
+      mode: "no-cors",
+      redirect: "follow",
+      referrer: "unknwn",
+      referrerPolicy: "unsafe-url",
+      signal: abortController.signal,
+      window: null,
+    };
+
+    const response = await wrappedFetch(serverOneUrl + "/set1", userInit);
+    await response.body?.cancel();
+
+    assertEquals(originalUserInit, userInit);
+  } finally {
+    abortController.abort();
   }
 });
