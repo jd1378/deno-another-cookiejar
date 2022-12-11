@@ -1,6 +1,8 @@
 import {
+  assert,
   assertArrayIncludes,
   assertEquals,
+  assertFalse,
   assertRejects,
   assertStrictEquals,
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
@@ -68,6 +70,11 @@ async function serverHandler(request: Request): Promise<Response> {
     const headers = new Headers({
       "Set-Cookie": "redirect_cookie=bar; Path=/; HttpOnly",
       "location": serverTwoUrl + "/set1",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_to_server_two") {
+    const headers = new Headers({
+      "location": serverTwoUrl + "/echo_headers",
     });
     return new Response(null, { status: 301, headers });
   } else if (pathname === "/redirect_loop") {
@@ -479,5 +486,50 @@ Deno.test("using wrapped fetch doesn't mutate user's initial init", async () => 
     assertEquals(originalUserInit, userInit);
   } finally {
     abortController.abort();
+  }
+});
+
+Deno.test("doesn't send sensitive headers after redirect to different domains", async () => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const res = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two",
+      {
+        headers: {
+          "foo": "bar",
+          "authorization": "foo",
+          "www-authenticate": "foo",
+          "cookie": "foo",
+          "cookie2": "foo",
+        },
+      },
+    ).then((r) => r.json());
+
+    const resHeaders = new Headers(res);
+    assert(resHeaders.has("foo"), "request didn't have `foo` in headers");
+    // should not contain the headers above
+    assertFalse(
+      resHeaders.has("www-authenticate"),
+      "request had `www-authenticate` in headers",
+    );
+    assertFalse(
+      resHeaders.has("authorization"),
+      "request had `authorization` in headers",
+    );
+    assertFalse(
+      resHeaders.has("cookie"),
+      "request had `cookie` in headers",
+    );
+    assertFalse(
+      resHeaders.has("cookie2"),
+      "request had `cookie2` in headers",
+    );
+  } finally {
+    abortController.abort();
+    abortController2.abort();
   }
 });
