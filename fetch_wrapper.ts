@@ -10,25 +10,8 @@ export type WrapFetchOptions = {
   cookieJar?: CookieJar;
 };
 
-interface InternalRequestInit extends RequestInit {
+interface ExtendedRequestInit extends RequestInit {
   redirectCount?: number;
-}
-
-function toInternalRequestInit(req: Request): InternalRequestInit {
-  return {
-    body: req.body,
-    cache: req.cache,
-    credentials: req.credentials,
-    headers: req.headers,
-    integrity: req.integrity,
-    keepalive: req.keepalive,
-    method: req.method,
-    mode: req.mode,
-    redirect: "manual",
-    referrer: req.referrer,
-    referrerPolicy: req.referrerPolicy,
-    signal: req.signal,
-  };
 }
 
 const redirectStatus = new Set([301, 302, 303, 307, 308]);
@@ -43,7 +26,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
 
   async function wrappedFetch(
     input: RequestInfo | URL,
-    init?: InternalRequestInit,
+    init?: ExtendedRequestInit,
   ): Promise<Response> {
     // let fetch handle the error
     if (!input) {
@@ -51,24 +34,33 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     }
     const cookieString = cookieJar.getCookieString(input);
 
-    let originalUrl, originalRedirect, internalInit;
+    let originalRedirectOption: ExtendedRequestInit["redirect"];
 
     if (input instanceof Request) {
-      originalUrl = input.url;
-      originalRedirect = input.redirect;
-      internalInit = toInternalRequestInit(input);
-    } else {
-      originalUrl = input;
-      originalRedirect = init?.redirect;
-      internalInit = { ...init, redirect: "manual" };
+      originalRedirectOption = input.redirect;
+    }
+    if (init?.redirect) {
+      originalRedirectOption = init?.redirect;
     }
 
-    if (!(internalInit.headers instanceof Headers)) {
-      internalInit.headers = new Headers(internalInit.headers || {});
-    }
-    internalInit.headers.set("cookie", cookieString);
+    const interceptedInit: ExtendedRequestInit = {
+      ...init,
+      redirect: "manual",
+    };
 
-    const response = await fetch(originalUrl, internalInit as RequestInit);
+    const reqHeaders = new Headers((input as Request).headers || {});
+
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => {
+        reqHeaders.set(key, value);
+      });
+    }
+
+    reqHeaders.set("cookie", cookieString);
+
+    interceptedInit.headers = reqHeaders;
+
+    const response = await fetch(input, interceptedInit as RequestInit);
 
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() === "set-cookie") {
@@ -76,7 +68,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
       }
     });
 
-    const redirectCount = internalInit.redirectCount ?? 0;
+    const redirectCount = interceptedInit.redirectCount ?? 0;
     const redirectUrl = response.headers.get("location");
 
     // Do this check here to allow tail recursion of redirect.
@@ -90,12 +82,12 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
       //  or location is not set
       !redirectUrl ||
       // or if it's the first request and request.redirect is set to 'manual'
-      (redirectCount === 0 && originalRedirect === "manual")
+      (redirectCount === 0 && originalRedirectOption === "manual")
     ) {
       return response;
     }
 
-    if (originalRedirect === "error") {
+    if (originalRedirectOption === "error") {
       await response.body?.cancel();
       throw new TypeError(
         `URI requested responded with a redirect and redirect mode is set to error: ${response.url}`,
@@ -112,9 +104,9 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
 
     await response.body?.cancel();
 
-    internalInit.redirectCount = redirectCount + 1;
+    interceptedInit.redirectCount = redirectCount + 1;
 
-    return await wrappedFetch(redirectUrl, internalInit as RequestInit);
+    return await wrappedFetch(redirectUrl, interceptedInit as RequestInit);
   }
 
   return wrappedFetch;
