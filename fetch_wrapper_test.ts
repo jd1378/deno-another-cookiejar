@@ -549,7 +549,7 @@ Deno.test("doesn't send sensitive headers after redirect to different domains", 
 
 Deno.test;
 
-Deno.test("doesn't POST body after redirection", async (t) => {
+Deno.test("doesn't POST body after redirection", async () => {
   const abortController = runServer(serverOneOptions);
   const abortController2 = runServer(serverTwoOptions);
 
