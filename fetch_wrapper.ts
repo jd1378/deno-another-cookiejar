@@ -121,13 +121,16 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
 
     // Do not forward sensitive headers to third-party domains.
     if (!isDomainOrSubdomain(originalRequestUrl, redirectUrl)) {
-      for (
-        const name of ["authorization", "www-authenticate"] // cookie headers are handled differently
-      ) {
+      for (const name of ["authorization", "www-authenticate"]) { // cookie headers are handled differently
         filteredHeaders.delete(name);
       }
     }
 
+    if (interceptedInit.method === "POST") {
+      filteredHeaders.delete("content-length");
+      interceptedInit.method = "GET";
+      interceptedInit.body = undefined;
+    }
     interceptedInit.headers = filteredHeaders;
 
     return await wrappedFetch(redirectUrl, interceptedInit as RequestInit);
