@@ -55,6 +55,8 @@ async function serverHandler(request: Request): Promise<Response> {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
+  } else if (pathname === "/echo_method") {
+    return new Response(request.method, { status: 200 });
   } else if (pathname === "/set1") {
     const headers = new Headers();
     headers.append("Set-Cookie", "foo=bar; Path=/; HttpOnly");
@@ -76,6 +78,16 @@ async function serverHandler(request: Request): Promise<Response> {
   } else if (pathname === "/redirect_to_server_two") {
     const headers = new Headers({
       "location": serverTwoUrl + "/echo_headers",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_to_server_two_echo_method") {
+    const headers = new Headers({
+      "location": serverTwoUrl + "/echo_method",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_to_server_two_echo_body") {
+    const headers = new Headers({
+      "location": serverTwoUrl + "/echo_body",
     });
     return new Response(null, { status: 301, headers });
   } else if (pathname === "/redirect_loop") {
@@ -528,6 +540,45 @@ Deno.test("doesn't send sensitive headers after redirect to different domains", 
     assertFalse(
       resHeaders.has("cookie2"),
       "`cookie2` header shouldn't be sent! ",
+    );
+  } finally {
+    abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test;
+
+Deno.test("doesn't POST body after redirection", async (t) => {
+  const abortController = runServer(serverOneOptions);
+  const abortController2 = runServer(serverTwoOptions);
+
+  try {
+    const cookieJar = new CookieJar();
+    const wrappedFetch = wrapFetch({ cookieJar });
+
+    const res = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_echo_method",
+      { body: "FOO", method: "POST" },
+    ).then((r) => r.text());
+
+    assertEquals(res, "GET", "method is NOT changed to GET after redirection");
+
+    const echoRes = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two_echo_body",
+      { body: "FOO", method: "POST" },
+    ).then((r) => r.text());
+
+    assertEquals(echoRes, "", "no content should be sent after redirection");
+
+    const headerRes = await wrappedFetch(
+      serverOneUrl + "/redirect_to_server_two",
+      { body: "FOO", method: "POST" },
+    ).then((r) => r.text());
+
+    assertFalse(
+      headerRes.includes("content-length"),
+      "content-length header must not be sent after redirection",
     );
   } finally {
     abortController.abort();
