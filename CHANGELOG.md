@@ -6,7 +6,8 @@
 
 ## v5.0.1
 
-- Important fix: Resets body, method and content-length when redirected by @maccyber in #15
+- Important fix: Resets body, method and content-length when redirected by
+  @maccyber in #15
 
 ## v5.0.0
 
