@@ -1,5 +1,26 @@
 # Changelog
 
+## v5.0.2
+
+- update module readme versions
+
+## v5.0.1
+
+- Important fix: Resets body, method and content-length when redirected by @maccyber in #15
+
+## v5.0.0
+
+- Handle set-cookie from a redirect response fixes #13 by @maccyber in #14
+
+## v4.1.6
+
+- Sets the correct cookie domain when redirected. Fixes #11 by @maccyber in #12
+
+## v4.1.5
+
+- Added documentation for getCookieString method by @Roosteridk in #10
+- fixed a few tests where date was causing it to fail (expired cookies)
+
 ## v4.1.4
 
 fix: make wrapFetch options optional
