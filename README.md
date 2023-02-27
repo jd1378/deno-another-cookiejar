@@ -7,7 +7,7 @@ Why the name ? because I didn't want to reserve the cookiejar name, since this
 library may not be good at it. (But I hope you like it)
 
 Did you like this ? Take a look at our other library, you may like that as well:
-https://github.com/jd1378/deno-fetch-goody
+<https://github.com/jd1378/deno-fetch-goody>
 
 ## usage
 
@@ -18,7 +18,7 @@ import {
   Cookie,
   CookieJar,
   wrapFetch,
-} from "https://deno.land/x/another_cookiejar@v5.0.2/mod.ts";
+} from "https://deno.land/x/another_cookiejar@v5.0.3/mod.ts";
 ```
 
 ### wrapFetch
