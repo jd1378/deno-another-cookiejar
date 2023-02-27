@@ -80,7 +80,12 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     });
 
     const redirectCount = interceptedInit.redirectCount ?? 0;
-    const redirectUrl = response.headers.get("location");
+    const redirectUrl = response.headers.has("location")
+      ? new URL(
+        response.headers.get("location")!.toString(),
+        originalRequestUrl,
+      ).toString()
+      : undefined;
 
     // Do this check here to allow tail recursion of redirect.
     if (redirectCount > 0) {

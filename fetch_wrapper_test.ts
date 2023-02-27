@@ -55,6 +55,12 @@ async function serverHandler(request: Request): Promise<Response> {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
+  } else if (pathname === "/echo_foo") {
+    const body = "foo";
+    return new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "application/text" },
+    });
   } else if (pathname === "/echo_method") {
     return new Response(request.method, { status: 200 });
   } else if (pathname === "/set1") {
@@ -88,6 +94,11 @@ async function serverHandler(request: Request): Promise<Response> {
   } else if (pathname === "/redirect_to_server_two_echo_body") {
     const headers = new Headers({
       "location": serverTwoUrl + "/echo_body",
+    });
+    return new Response(null, { status: 301, headers });
+  } else if (pathname === "/redirect_to_echo_foo") {
+    const headers = new Headers({
+      "location": "/echo_foo",
     });
     return new Response(null, { status: 301, headers });
   } else if (pathname === "/redirect_loop") {
@@ -547,8 +558,6 @@ Deno.test("doesn't send sensitive headers after redirect to different domains", 
   }
 });
 
-Deno.test;
-
 Deno.test("doesn't POST body after redirection", async () => {
   const abortController = runServer(serverOneOptions);
   const abortController2 = runServer(serverTwoOptions);
@@ -582,6 +591,29 @@ Deno.test("doesn't POST body after redirection", async () => {
     );
   } finally {
     abortController.abort();
+    abortController2.abort();
+  }
+});
+
+Deno.test("handles path redirections", async () => {
+  const abortController2 = runServer(serverTwoOptions);
+
+  try {
+    const wrappedFetch = wrapFetch();
+
+    const res = await wrappedFetch(
+      serverTwoUrl + "/redirect_to_echo_foo",
+      { method: "GET" },
+    ).then((r) => r.text());
+
+    console.log(res);
+
+    assertEquals(
+      res,
+      "foo",
+      "path redirect breaks the app",
+    );
+  } finally {
     abortController2.abort();
   }
 });
