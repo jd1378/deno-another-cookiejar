@@ -66,7 +66,10 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
       });
     }
 
-    reqHeaders.set("cookie", cookieString);
+    if (cookieString.length) {
+      reqHeaders.set("cookie", cookieString);
+    }
+    
     reqHeaders.delete("cookie2"); // Remove cookie2 if it exists, It's deprecated
 
     interceptedInit.headers = reqHeaders;
