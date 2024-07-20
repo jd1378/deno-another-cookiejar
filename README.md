@@ -1,4 +1,4 @@
-# deno-another-cookiejar
+# another-cookiejar
 
 This library offers a fetch wrapper that retain cookies. This library also
 provides a simple cookiejar;
