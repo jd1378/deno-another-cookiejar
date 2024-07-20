@@ -145,7 +145,7 @@ export class Cookie {
   secure: boolean | undefined;
   httpOnly: boolean | undefined;
   sameSite: "Lax" | "Strict" | "None" | undefined;
-  creationDate = Date.now();
+  creationDate: number = Date.now();
   // deno-lint-ignore ban-ts-comment
   // @ts-ignore
   creationIndex: number;
@@ -178,7 +178,7 @@ export class Cookie {
     });
   }
 
-  static from(cookieStr: string) {
+  static from(cookieStr: string): Cookie {
     const options = {
       name: undefined,
       value: undefined,
@@ -316,7 +316,7 @@ export class Cookie {
   /**
    * @param url - the url that we are checking against
    */
-  canSendTo(url: string | Request | URL) {
+  canSendTo(url: string | Request | URL): boolean {
     const urlObj = parseURL(url);
 
     if (this.secure && urlObj.protocol !== "https:") {
@@ -367,7 +367,7 @@ export class Cookie {
     return false;
   }
 
-  getCookieString() {
+  getCookieString(): string {
     return `${this.name || ""}=${this.value || ""}`;
   }
 
@@ -399,7 +399,7 @@ export class Cookie {
     }
   }
 
-  isExpired() {
+  isExpired(): boolean {
     if (this.maxAge !== undefined) {
       if (Date.now() - this.creationDate >= this.maxAge * 1000) {
         return true;
@@ -415,7 +415,7 @@ export class Cookie {
     return false;
   }
 
-  toString() {
+  toString(): string {
     let str = this.getCookieString();
 
     if (this.expires && this.expires !== Infinity) {
@@ -446,7 +446,7 @@ export class Cookie {
     return str;
   }
 
-  clone() {
+  clone(): Cookie {
     return new Cookie(JSON.parse(JSON.stringify(this)));
   }
 }

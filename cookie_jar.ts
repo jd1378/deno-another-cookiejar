@@ -1,6 +1,6 @@
 import {
   Cookie,
-  CookieOptions,
+  type CookieOptions,
   isSameDomainOrSubdomain,
   parseURL,
 } from "./cookie.ts";
@@ -91,7 +91,7 @@ function cookieCompare(a: Cookie, b: Cookie) {
 }
 
 export class CookieJar {
-  cookies = Array<Cookie>();
+  cookies: Cookie[] = [];
 
   /**
    * @param cookies - the cookies array to initialize with
@@ -167,7 +167,7 @@ export class CookieJar {
    * @param options - the options to filter cookies with, and if not provided, returnes all cookies.
    *  if no cookie is found with given options, an empty array is returned.
    */
-  getCookies(options?: CookieOptions | Cookie) {
+  getCookies(options?: CookieOptions | Cookie): Cookie[] {
     if (options) {
       const matchedCookies: Cookie[] = [];
       const removeCookies: Cookie[] = [];
@@ -196,7 +196,7 @@ export class CookieJar {
    * @param url - the url to get the cookies for. if provided, will only return cookies that match the domain and path of the url.
    * @returns string of all cookies that match the url, in the from of `<cookie-name>=<cookie-value>` seperated by `; `
    */
-  getCookieString(url: string | Request | URL) {
+  getCookieString(url: string | Request | URL): string {
     const searchCookie = new Cookie();
     searchCookie.setDomain(url);
     const cookiesToSend = this.getCookies(searchCookie)
@@ -208,7 +208,7 @@ export class CookieJar {
     return cookiesToSend;
   }
 
-  toJSON() {
+  toJSON(): Cookie[] {
     return this.cookies;
   }
 
