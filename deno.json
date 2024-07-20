@@ -1,5 +1,5 @@
 {
-  "name": "@jd1378/deno-another-cookiejar",
+  "name": "@jd1378/another-cookiejar",
   "version": "5.0.6",
   "exports": "./mod.ts"
 }
