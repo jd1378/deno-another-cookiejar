@@ -10,5 +10,5 @@
   "deno.unstable": true,
   "deno.lint": true,
   "debug.javascript.unmapMissingSources": true,
-  "deno.codeLens.test": true,
+  "deno.codeLens.test": true
 }
