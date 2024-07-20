@@ -69,7 +69,7 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
     if (cookieString.length) {
       reqHeaders.set("cookie", cookieString);
     }
-    
+
     reqHeaders.delete("cookie2"); // Remove cookie2 if it exists, It's deprecated
 
     interceptedInit.headers = reqHeaders;
@@ -129,7 +129,10 @@ export function wrapFetch(options?: WrapFetchOptions): typeof fetch {
 
     // Do not forward sensitive headers to third-party domains.
     if (!isDomainOrSubdomain(originalRequestUrl, redirectUrl)) {
-      for (const name of ["authorization", "www-authenticate"]) { // cookie headers are handled differently
+      // cookie headers are handled differently
+      for (
+        const name of ["authorization", "www-authenticate", "cookie", "cookie2"]
+      ) {
         filteredHeaders.delete(name);
       }
     }

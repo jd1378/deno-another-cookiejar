@@ -545,7 +545,7 @@ Deno.test("doesn't send sensitive headers after redirect to different domains", 
       "request had `authorization` in headers",
     );
     assertFalse(
-      resHeaders.get("cookie"),
+      resHeaders.has("cookie"),
       "`cookie` header is not empty",
     );
     assertFalse(
@@ -605,8 +605,6 @@ Deno.test("handles path redirections", async () => {
       serverTwoUrl + "/redirect_to_echo_foo",
       { method: "GET" },
     ).then((r) => r.text());
-
-    console.log(res);
 
     assertEquals(
       res,

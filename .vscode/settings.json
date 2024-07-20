@@ -10,7 +10,5 @@
   "deno.unstable": true,
   "deno.lint": true,
   "debug.javascript.unmapMissingSources": true,
-  "deno.import_intellisense_origins": {
-    "https://deno.land": true
-  }
+  "deno.codeLens.test": true,
 }
