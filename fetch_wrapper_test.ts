@@ -8,22 +8,7 @@ import {
 } from "https://deno.land/std@0.139.0/testing/asserts.ts";
 import { CookieJar } from "./cookie_jar.ts";
 import { wrapFetch } from "./fetch_wrapper.ts";
-import { delay } from "https://deno.land/std@0.139.0/async/delay.ts";
 import { Cookie } from "./cookie.ts";
-
-function drop(resourceName: string) {
-  const rt: Deno.ResourceMap = Deno.resources();
-  for (const rid in rt) {
-    if (rt[rid] == resourceName) {
-      try {
-        Deno.close(Number(rid));
-        return true;
-      } catch {
-        return false;
-      }
-    }
-  }
-}
 
 const serverOnePort = 53250;
 const serverTwoPort = 53251;
@@ -123,44 +108,17 @@ type ListenAndServeOptions = {
   abortController: AbortController;
 };
 
-async function listenAndServe(options: ListenAndServeOptions) {
-  const { hostname, port, abortController } = options;
-
-  const listener = Deno.listen({ hostname, port });
-
-  const handleAbort = () => {
-    abortController.signal.removeEventListener("abort", handleAbort);
-    listener.close();
-    drop("httpConn");
-  };
-
-  abortController.signal.addEventListener("abort", handleAbort);
-
-  try {
-    for await (const conn of listener) {
-      for await (
-        const { respondWith, request } of Deno.serveHttp(conn)
-      ) {
-        respondWith(serverHandler(request));
-      }
-    }
-  } catch {
-    drop("httpConn");
-  }
-}
-
 function runServer(
   options: Omit<ListenAndServeOptions, "abortController">,
 ) {
+  const { hostname, port } = options;
   const abortController = new AbortController();
-  listenAndServe({
-    ...options,
-    abortController,
-  }).catch((e) => {
-    abortController.abort();
-    delay(10);
-    throw e;
-  });
+
+  Deno.serve(
+    { signal: abortController.signal, hostname, port, onListen() {} },
+    (req) => serverHandler(req),
+  );
+
   return abortController;
 }
 
