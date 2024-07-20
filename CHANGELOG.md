@@ -1,5 +1,9 @@
 # Changelog
 
+## v5.0.4
+
+- now removes cookie and cookie2 headers on redirect
+
 ## v5.0.2
 
 - update module readme versions
